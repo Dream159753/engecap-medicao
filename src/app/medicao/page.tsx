@@ -107,7 +107,11 @@ export default function MedicaoScreen() {
             <p className="col-span-2 text-center py-12 text-gray-500">Nenhum serviço liberado ainda.</p>
           ) : (
             servicosLiberados.filter(s => s.liberado).map(s => (
-              <button key={s.id} onClick={() => adicionarMedicao(s)} className="border-2 border-gray-200 hover:border-blue-500 p-6 rounded-2xl text-left transition-all hover:shadow-md">
+              <button 
+                key={s.id} 
+                onClick={() => adicionarMedicao(s)} 
+                className="border-2 border-gray-200 hover:border-blue-500 p-6 rounded-2xl text-left transition-all hover:shadow-md"
+              >
                 <p className="font-medium text-lg">{s.servico}</p>
                 <p className="text-gray-500">{s.secao} • {s.andar}</p>
               </button>
@@ -115,34 +119,62 @@ export default function MedicaoScreen() {
           )}
         </div>
 
-        {/* ==================== INTEGRAÇÃO E VT SÁBADO ==================== */}
+        {/* Medições Lançadas */}
+        {medicoes.length > 0 && (
+          <div className="mb-10">
+            <h3 className="font-semibold text-lg mb-4">Medições Lançadas</h3>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="p-4 text-left">Funcionário</th>
+                  <th className="p-4 text-left">Serviço</th>
+                  <th className="p-4 text-center">Quantidade</th>
+                  <th className="p-4 text-right">Valor Unit.</th>
+                  <th className="p-4 text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {medicoes.map(m => (
+                  <tr key={m.id} className="border-t">
+                    <td className="p-4 font-medium">{m.nome}</td>
+                    <td className="p-4">
+                      {m.servico} <span className="text-blue-600 font-medium">- {m.andar}</span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <input 
+                        type="number" 
+                        value={m.quantidade} 
+                        onChange={(e) => atualizarQuantidade(m.id, Number(e.target.value) || 0)}
+                        className="w-28 text-center border rounded-xl py-2 text-lg"
+                      />
+                    </td>
+                    <td className="p-4 text-right">R$ {m.valorUnitario.toFixed(2)}</td>
+                    <td className="p-4 text-right font-bold">R$ {m.total.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Integração e VT Sábado */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 border-t pt-8">
           <div className="bg-gray-50 p-6 rounded-2xl">
             <h4 className="font-semibold mb-3 text-lg">Integração</h4>
             <div className="flex items-center gap-4">
-              <input 
-                type="number" 
-                value={qtIntegracao} 
-                onChange={(e) => setQtIntegracao(Number(e.target.value) || 0)} 
-                className="border rounded-xl px-5 py-3 w-32 text-center text-lg" 
-              />
+              <input type="number" value={qtIntegracao} onChange={(e) => setQtIntegracao(Number(e.target.value)||0)} className="border rounded-xl px-5 py-3 w-32 text-center text-lg" />
               <span className="text-gray-500">× R$ 9,98</span>
             </div>
-            <p className="text-right mt-4 font-bold text-lg">Total: R$ {(qtIntegracao * 9.98).toFixed(2)}</p>
+            <p className="text-right mt-4 font-bold text-lg">R$ {(qtIntegracao * 9.98).toFixed(2)}</p>
           </div>
 
           <div className="bg-gray-50 p-6 rounded-2xl">
             <h4 className="font-semibold mb-3 text-lg">VT Sábado</h4>
             <div className="flex items-center gap-4">
-              <input 
-                type="number" 
-                value={qtVTSabado} 
-                onChange={(e) => setQtVTSabado(Number(e.target.value) || 0)} 
-                className="border rounded-xl px-5 py-3 w-32 text-center text-lg" 
-              />
+              <input type="number" value={qtVTSabado} onChange={(e) => setQtVTSabado(Number(e.target.value)||0)} className="border rounded-xl px-5 py-3 w-32 text-center text-lg" />
               <span className="text-gray-500">× R$ 19,98</span>
             </div>
-            <p className="text-right mt-4 font-bold text-lg">Total: R$ {(qtVTSabado * 19.98).toFixed(2)}</p>
+            <p className="text-right mt-4 font-bold text-lg">R$ {(qtVTSabado * 19.98).toFixed(2)}</p>
           </div>
         </div>
 
