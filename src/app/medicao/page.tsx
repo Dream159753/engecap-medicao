@@ -35,7 +35,6 @@ export default function MedicaoScreen() {
   const funcionarios = [
     { chapa: "01", nome: "João da Silva", funcao: "Carpinteiro" },
     { chapa: "02", nome: "Maria Santos", funcao: "Armadora" },
-    { chapa: "03", nome: "Pedro Oliveira", funcao: "Pedreiro" },
   ];
 
   useEffect(() => {
@@ -45,12 +44,8 @@ export default function MedicaoScreen() {
 
   const buscarFuncionario = () => {
     const encontrado = funcionarios.find(f => f.chapa === chapaInput);
-    if (encontrado) {
-      setFuncionarioAtual(encontrado);
-    } else {
-      alert("Funcionário não encontrado!");
-      setFuncionarioAtual(null);
-    }
+    if (encontrado) setFuncionarioAtual(encontrado);
+    else alert("Funcionário não encontrado!");
   };
 
   const adicionarMedicao = (servico: ServicoLiberado) => {
@@ -83,13 +78,6 @@ export default function MedicaoScreen() {
   const totalVTSabado = qtVTSabado * 19.98;
   const totalGeral = totalServicos + totalIntegracao + totalVTSabado;
 
-  const finalizarMedicao = () => {
-    if (medicoes.length === 0) return alert("Adicione pelo menos uma medição!");
-    alert(`✅ Medição finalizada com sucesso!\nTotal: R$ ${totalGeral.toFixed(2)}\n\nDados salvos no sistema.`);
-    console.log("Medição Finalizada:", { medicoes, totalGeral });
-    // Aqui futuramente vai salvar no banco
-  };
-
   return (
     <div className="p-8">
       <h2 className="text-3xl font-bold mb-8">Lançamento de Medição</h2>
@@ -100,16 +88,8 @@ export default function MedicaoScreen() {
           <div className="flex-1">
             <label className="block text-sm font-medium mb-2">Chapa do Funcionário</label>
             <div className="flex gap-3">
-              <input
-                type="text"
-                value={chapaInput}
-                onChange={(e) => setChapaInput(e.target.value)}
-                placeholder="Ex: 01"
-                className="flex-1 border border-gray-300 rounded-xl px-5 py-4 text-lg"
-              />
-              <button onClick={buscarFuncionario} className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-semibold">
-                Buscar
-              </button>
+              <input type="text" value={chapaInput} onChange={(e) => setChapaInput(e.target.value)} placeholder="Ex: 01" className="flex-1 border border-gray-300 rounded-xl px-5 py-4 text-lg" />
+              <button onClick={buscarFuncionario} className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-semibold">Buscar</button>
             </div>
           </div>
         </div>
@@ -127,11 +107,7 @@ export default function MedicaoScreen() {
             <p className="col-span-2 text-center py-12 text-gray-500">Nenhum serviço liberado ainda.</p>
           ) : (
             servicosLiberados.filter(s => s.liberado).map(s => (
-              <button
-                key={s.id}
-                onClick={() => adicionarMedicao(s)}
-                className="border-2 border-gray-200 hover:border-blue-500 p-6 rounded-2xl text-left transition-all hover:shadow-md"
-              >
+              <button key={s.id} onClick={() => adicionarMedicao(s)} className="border-2 border-gray-200 hover:border-blue-500 p-6 rounded-2xl text-left transition-all hover:shadow-md">
                 <p className="font-medium text-lg">{s.servico}</p>
                 <p className="text-gray-500">{s.secao} • {s.andar}</p>
               </button>
@@ -139,60 +115,34 @@ export default function MedicaoScreen() {
           )}
         </div>
 
-        {/* Tabela de Medições Lançadas */}
-        {medicoes.length > 0 && (
-          <div className="mb-10">
-            <h3 className="font-semibold text-lg mb-4">Medições Lançadas</h3>
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="p-4 text-left">Funcionário</th>
-                  <th className="p-4 text-left">Serviço</th>
-                  <th className="p-4 text-center">Quantidade</th>
-                  <th className="p-4 text-right">Valor Unit.</th>
-                  <th className="p-4 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {medicoes.map(m => (
-                  <tr key={m.id} className="border-t">
-                    <td className="p-4 font-medium">{m.nome}</td>
-                    <td className="p-4">{m.servico}</td>
-                    <td className="p-4 text-center">
-                      <input 
-                        type="number" 
-                        value={m.quantidade} 
-                        onChange={(e) => atualizarQuantidade(m.id, Number(e.target.value) || 0)}
-                        className="w-28 text-center border rounded-xl py-2 text-lg"
-                      />
-                    </td>
-                    <td className="p-4 text-right">R$ {m.valorUnitario.toFixed(2)}</td>
-                    <td className="p-4 text-right font-bold">R$ {m.total.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Integração e VT Sábado */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+        {/* ==================== INTEGRAÇÃO E VT SÁBADO ==================== */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 border-t pt-8">
           <div className="bg-gray-50 p-6 rounded-2xl">
-            <h4 className="font-semibold mb-3">Integração</h4>
+            <h4 className="font-semibold mb-3 text-lg">Integração</h4>
             <div className="flex items-center gap-4">
-              <input type="number" value={qtIntegracao} onChange={(e) => setQtIntegracao(Number(e.target.value)||0)} className="border rounded-xl px-5 py-3 w-32 text-center text-lg" />
+              <input 
+                type="number" 
+                value={qtIntegracao} 
+                onChange={(e) => setQtIntegracao(Number(e.target.value) || 0)} 
+                className="border rounded-xl px-5 py-3 w-32 text-center text-lg" 
+              />
               <span className="text-gray-500">× R$ 9,98</span>
             </div>
-            <p className="text-right mt-4 font-bold text-lg">R$ {(qtIntegracao * 9.98).toFixed(2)}</p>
+            <p className="text-right mt-4 font-bold text-lg">Total: R$ {(qtIntegracao * 9.98).toFixed(2)}</p>
           </div>
 
           <div className="bg-gray-50 p-6 rounded-2xl">
-            <h4 className="font-semibold mb-3">VT Sábado</h4>
+            <h4 className="font-semibold mb-3 text-lg">VT Sábado</h4>
             <div className="flex items-center gap-4">
-              <input type="number" value={qtVTSabado} onChange={(e) => setQtVTSabado(Number(e.target.value)||0)} className="border rounded-xl px-5 py-3 w-32 text-center text-lg" />
+              <input 
+                type="number" 
+                value={qtVTSabado} 
+                onChange={(e) => setQtVTSabado(Number(e.target.value) || 0)} 
+                className="border rounded-xl px-5 py-3 w-32 text-center text-lg" 
+              />
               <span className="text-gray-500">× R$ 19,98</span>
             </div>
-            <p className="text-right mt-4 font-bold text-lg">R$ {(qtVTSabado * 19.98).toFixed(2)}</p>
+            <p className="text-right mt-4 font-bold text-lg">Total: R$ {(qtVTSabado * 19.98).toFixed(2)}</p>
           </div>
         </div>
 
@@ -201,10 +151,7 @@ export default function MedicaoScreen() {
             <p className="text-2xl font-semibold">Total Geral</p>
             <p className="text-6xl font-bold text-green-600">R$ {totalGeral.toFixed(2)}</p>
           </div>
-          <button 
-            onClick={finalizarMedicao}
-            className="bg-green-600 hover:bg-green-700 text-white px-16 py-5 rounded-3xl font-semibold text-xl"
-          >
+          <button className="bg-green-600 hover:bg-green-700 text-white px-16 py-5 rounded-3xl font-semibold text-xl">
             Finalizar Medição
           </button>
         </div>
