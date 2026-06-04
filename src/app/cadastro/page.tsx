@@ -2,8 +2,16 @@
 
 import { useState, useEffect } from 'react';
 
-type Andar = { nome: string; volume: number; area: number };
-type Secao = { nome: string; andares: Andar[] };
+type Andar = {
+  nome: string;
+  volume: number;   // m³ total do andar
+  area: number;     // m² total do andar
+};
+
+type Secao = {
+  nome: string;
+  andares: Andar[];
+};
 
 export default function CadastroObra() {
   const [obra, setObra] = useState({ nome: "Faena", numero: "325" });
@@ -12,15 +20,14 @@ export default function CadastroObra() {
   const [mostrarInputNovaSecao, setMostrarInputNovaSecao] = useState(false);
   const [nomeNovaSecao, setNomeNovaSecao] = useState("");
 
-  // Carregar do localStorage
   useEffect(() => {
     const salvo = localStorage.getItem('secoesObra');
     if (salvo) setSecoes(JSON.parse(salvo));
   }, []);
 
-  const salvarNoStorage = (novasSecoes: Secao[]) => {
-    setSecoes(novasSecoes);
-    localStorage.setItem('secoesObra', JSON.stringify(novasSecoes));
+  const salvarNoStorage = (novas: Secao[]) => {
+    setSecoes(novas);
+    localStorage.setItem('secoesObra', JSON.stringify(novas));
   };
 
   const adicionarNovaSecao = () => {
@@ -32,11 +39,16 @@ export default function CadastroObra() {
 
   const adicionarAndar = (indexSecao: number) => {
     const novas = [...secoes];
-    novas[indexSecao].andares.push({
-      nome: `${novas[indexSecao].andares.length + 1}º Pavimento`,
-      volume: 0,
-      area: 0
-    });
+    novas[indexSecao].andares.push({ nome: `${novas[indexSecao].andares.length + 1}º Pavimento`, volume: 0, area: 0 });
+    salvarNoStorage(novas);
+  };
+
+  const atualizarAndar = (indexSecao: number, indexAndar: number, campo: 'nome' | 'volume' | 'area', valor: string) => {
+    const novas = [...secoes];
+    const num = Number(valor) || 0;
+    if (campo === 'nome') novas[indexSecao].andares[indexAndar].nome = valor;
+    else if (campo === 'volume') novas[indexSecao].andares[indexAndar].volume = num;
+    else novas[indexSecao].andares[indexAndar].area = num;
     salvarNoStorage(novas);
   };
 
@@ -61,40 +73,43 @@ export default function CadastroObra() {
     <div className="p-8">
       <h2 className="text-3xl font-bold mb-8">Cadastro de Obra</h2>
       <div className="bg-white rounded-2xl shadow p-8">
-        {/* Campos da obra */}
         <div className="grid grid-cols-2 gap-6 mb-10">
           <div>
             <label className="block text-sm font-medium mb-2">Nome da Obra</label>
-            <input type="text" value={obra.nome} onChange={(e) => setObra({...obra, nome: e.target.value})} className="w-full border rounded-lg px-4 py-3" />
+            <input type="text" value={obra.nome} onChange={(e) => setObra({...obra, nome: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-3" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Código da Obra</label>
-            <input type="text" value={obra.numero} onChange={(e) => setObra({...obra, numero: e.target.value})} className="w-full border rounded-lg px-4 py-3" />
+            <input type="text" value={obra.numero} onChange={(e) => setObra({...obra, numero: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-3" />
           </div>
         </div>
 
         <h4 className="text-xl font-semibold mb-6">Seções da Obra</h4>
 
         {secoes.map((secao, i) => (
-          <div key={i} className="mb-8 border rounded-xl p-6 bg-gray-50">
+          <div key={i} className="mb-10 border border-gray-200 rounded-xl p-6 bg-gray-50">
             <div className="flex justify-between mb-4">
-              <h5 className="font-semibold text-lg">{secao.nome}</h5>
+              <h5 className="text-lg font-semibold">🏗️ {secao.nome}</h5>
               <button onClick={() => removerSecao(i)} className="text-red-600">Excluir</button>
             </div>
+
             {secao.andares.map((andar, j) => (
-              <div key={j} className="grid grid-cols-3 gap-4 mb-4 p-4 bg-white rounded border">
-                <input value={andar.nome} onChange={(e) => {
-                  const novas = [...secoes];
-                  novas[i].andares[j].nome = e.target.value;
-                  salvarNoStorage(novas);
-                }} className="border rounded px-3 py-2" />
-                <input type="number" placeholder="Volume m³" className="border rounded px-3 py-2" />
-                <div className="flex gap-2">
-                  <input type="number" placeholder="Área m²" className="border rounded px-3 py-2 flex-1" />
-                  <button onClick={() => removerAndar(i, j)} className="text-red-600">Excluir</button>
+              <div key={j} className="grid grid-cols-3 gap-4 mb-4 p-4 bg-white rounded-lg border">
+                <div>
+                  <label className="text-sm block mb-1">Nome do Andar</label>
+                  <input type="text" value={andar.nome} onChange={(e) => atualizarAndar(i, j, 'nome', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label className="text-sm block mb-1">Volume Total (m³)</label>
+                  <input type="number" value={andar.volume || ""} onChange={(e) => atualizarAndar(i, j, 'volume', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label className="text-sm block mb-1">Área Total (m²)</label>
+                  <input type="number" value={andar.area || ""} onChange={(e) => atualizarAndar(i, j, 'area', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
                 </div>
               </div>
             ))}
+
             <button onClick={() => adicionarAndar(i)} className="text-blue-600">+ Adicionar Andar</button>
           </div>
         ))}
@@ -104,14 +119,14 @@ export default function CadastroObra() {
             <button onClick={() => setMostrarInputNovaSecao(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg">+ Nova Seção</button>
           ) : (
             <div className="flex gap-3">
-              <input value={nomeNovaSecao} onChange={(e) => setNomeNovaSecao(e.target.value)} placeholder="Nome da seção" className="border rounded-lg px-4 py-3 flex-1" />
+              <input value={nomeNovaSecao} onChange={(e) => setNomeNovaSecao(e.target.value)} placeholder="Ex: Torre B" className="border rounded-lg px-4 py-3 flex-1" />
               <button onClick={adicionarNovaSecao} className="bg-green-600 text-white px-6 py-3 rounded-lg">Adicionar</button>
             </div>
           )}
         </div>
 
         <div className="mt-10 flex justify-end">
-          <button onClick={salvarObra} className="bg-green-600 text-white px-10 py-4 rounded-2xl font-semibold">Salvar Obra Completa</button>
+          <button onClick={salvarObra} className="bg-green-600 text-white px-10 py-4 rounded-2xl font-semibold text-lg">Salvar Obra Completa</button>
         </div>
       </div>
     </div>

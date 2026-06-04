@@ -2,54 +2,70 @@
 
 import { useState, useEffect } from 'react';
 
+type Andar = { nome: string; volume: number; area: number };
+type Secao = { nome: string; andares: Andar[] };
+
 type ServicoLiberado = {
   id: number;
   secao: string;
   andar: string;
   servico: string;
+  quantidadeTotal: number;   // Total cadastrado no cadastro
+  quantidadeLiberada: number; // Quanto o engenheiro vai liberar
   liberado: boolean;
 };
 
 export default function LiberacaoTarefas() {
+  const [secoes, setSecoes] = useState<Secao[]>([]);
   const [servicos, setServicos] = useState<ServicoLiberado[]>([]);
 
-  // Carrega do Cadastro
   useEffect(() => {
-    const secoesSalvas = localStorage.getItem('secoesObra');
-    if (secoesSalvas) {
-      const secoes = JSON.parse(secoesSalvas);
-      const lista: ServicoLiberado[] = [];
+    const salvo = localStorage.getItem('secoesObra');
+    if (salvo) {
+      const secoesCarregadas = JSON.parse(salvo);
+      setSecoes(secoesCarregadas);
 
-      secoes.forEach((secao: any, s: number) => {
-        secao.andares.forEach((andar: any, a: number) => {
-          lista.push({
-            id: Date.now() + s * 100 + a * 10 + 1,
+      const listaServicos: ServicoLiberado[] = [];
+
+      secoesCarregadas.forEach((secao: Secao, sIndex: number) => {
+        secao.andares.forEach((andar: Andar, aIndex: number) => {
+          listaServicos.push({
+            id: sIndex * 1000 + aIndex * 100 + 1,
             secao: secao.nome,
             andar: andar.nome,
             servico: "Forma + Armação + Concretagem",
+            quantidadeTotal: andar.area || 0,
+            quantidadeLiberada: 0,
             liberado: false
           });
-          lista.push({
-            id: Date.now() + s * 100 + a * 10 + 2,
+          listaServicos.push({
+            id: sIndex * 1000 + aIndex * 100 + 2,
             secao: secao.nome,
             andar: andar.nome,
             servico: "Desforma",
+            quantidadeTotal: andar.area || 0,
+            quantidadeLiberada: 0,
             liberado: false
           });
         });
       });
-      setServicos(lista);
+
+      setServicos(listaServicos);
     }
   }, []);
 
+  const atualizarQuantidadeLiberada = (id: number, valor: number) => {
+    setServicos(servicos.map(s => 
+      s.id === id ? { ...s, quantidadeLiberada: valor } : s
+    ));
+  };
+
   const toggleLiberacao = (id: number) => {
-    const novosServicos = servicos.map(s => 
+    const novos = servicos.map(s => 
       s.id === id ? { ...s, liberado: !s.liberado } : s
     );
-    setServicos(novosServicos);
-    
-    // Salva no localStorage para a Medição ver
-    localStorage.setItem('servicosLiberados', JSON.stringify(novosServicos));
+    setServicos(novos);
+    localStorage.setItem('servicosLiberados', JSON.stringify(novos));
   };
 
   return (
@@ -63,6 +79,8 @@ export default function LiberacaoTarefas() {
               <th className="p-4 text-left">Seção</th>
               <th className="p-4 text-left">Andar</th>
               <th className="p-4 text-left">Serviço</th>
+              <th className="p-4 text-center">Total Cadastrado</th>
+              <th className="p-4 text-center">Liberar Quantidade</th>
               <th className="p-4 text-center">Status</th>
               <th className="p-4 text-center">Ação</th>
             </tr>
@@ -70,8 +88,8 @@ export default function LiberacaoTarefas() {
           <tbody>
             {servicos.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-16 text-center text-gray-500">
-                  Cadastre seções na tela de Cadastro primeiro
+                <td colSpan={7} className="p-16 text-center text-gray-500">
+                  Cadastre seções e andares na tela de Cadastro primeiro
                 </td>
               </tr>
             ) : (
@@ -80,8 +98,17 @@ export default function LiberacaoTarefas() {
                   <td className="p-4 font-medium">{item.secao}</td>
                   <td className="p-4">{item.andar}</td>
                   <td className="p-4">{item.servico}</td>
+                  <td className="p-4 text-center font-semibold">{item.quantidadeTotal}</td>
                   <td className="p-4 text-center">
-                    <span className={`px-5 py-2 rounded-full text-sm ${item.liberado ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    <input 
+                      type="number" 
+                      value={item.quantidadeLiberada} 
+                      onChange={(e) => atualizarQuantidadeLiberada(item.id, Number(e.target.value) || 0)}
+                      className="w-24 text-center border rounded-xl py-2"
+                    />
+                  </td>
+                  <td className="p-4 text-center">
+                    <span className={`px-4 py-1 rounded-full text-sm ${item.liberado ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                       {item.liberado ? '✅ Liberado' : '⏳ Pendente'}
                     </span>
                   </td>
