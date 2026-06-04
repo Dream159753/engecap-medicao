@@ -13,38 +13,40 @@ type ServicoLiberado = {
 export default function LiberacaoTarefas() {
   const [servicos, setServicos] = useState<ServicoLiberado[]>([]);
 
-  // Carrega os dados do Cadastro
   useEffect(() => {
     const secoesSalvas = localStorage.getItem('secoesObra');
-    if (secoesSalvas) {
-      const secoes = JSON.parse(secoesSalvas);
-      const listaServicos: ServicoLiberado[] = [];
+    if (!secoesSalvas) {
+      setServicos([]);
+      return;
+    }
 
-      secoes.forEach((secao: any, sIndex: number) => {
-        secao.andares.forEach((andar: any, aIndex: number) => {
-          listaServicos.push({
-            id: sIndex * 100 + aIndex * 10 + 1,
-            secao: secao.nome,
-            andar: andar.nome,
-            servico: "Forma + Armação + Concretagem",
-            liberado: false
-          });
-          listaServicos.push({
-            id: sIndex * 100 + aIndex * 10 + 2,
-            secao: secao.nome,
-            andar: andar.nome,
-            servico: "Desforma",
-            liberado: false
-          });
+    const secoes = JSON.parse(secoesSalvas);
+    const lista: ServicoLiberado[] = [];
+
+    secoes.forEach((secao: any, s: number) => {
+      secao.andares.forEach((andar: any, a: number) => {
+        lista.push({
+          id: s * 1000 + a * 100 + 1,
+          secao: secao.nome,
+          andar: andar.nome,
+          servico: "Forma + Armação + Concretagem",
+          liberado: false
+        });
+        lista.push({
+          id: s * 1000 + a * 100 + 2,
+          secao: secao.nome,
+          andar: andar.nome,
+          servico: "Desforma",
+          liberado: false
         });
       });
+    });
 
-      setServicos(listaServicos);
-    }
+    setServicos(lista);
   }, []);
 
   const toggleLiberacao = (id: number) => {
-    setServicos(servicos.map(s => 
+    setServicos(prev => prev.map(s => 
       s.id === id ? { ...s, liberado: !s.liberado } : s
     ));
   };
@@ -67,25 +69,25 @@ export default function LiberacaoTarefas() {
           <tbody>
             {servicos.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-12 text-center text-gray-500">
-                  Cadastre seções e andares na tela de Cadastro primeiro
+                <td colSpan={5} className="p-16 text-center text-gray-500">
+                  Volte na tela de Cadastro de Obra e cadastre seções/andar primeiro
                 </td>
               </tr>
             ) : (
               servicos.map(item => (
                 <tr key={item.id} className="border-t hover:bg-gray-50">
-                  <td className="p-4 font-medium">{item.secao}</td>
+                  <td className="p-4">{item.secao}</td>
                   <td className="p-4">{item.andar}</td>
                   <td className="p-4">{item.servico}</td>
                   <td className="p-4 text-center">
-                    <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${item.liberado ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    <span className={`px-5 py-2 rounded-full text-sm ${item.liberado ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                       {item.liberado ? '✅ Liberado' : '⏳ Pendente'}
                     </span>
                   </td>
                   <td className="p-4 text-center">
                     <button 
                       onClick={() => toggleLiberacao(item.id)}
-                      className={`px-8 py-2 rounded-lg text-sm font-medium ${item.liberado ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-600 text-white hover:bg-green-700'}`}
+                      className={`px-8 py-2 rounded-lg text-sm font-medium ${item.liberado ? 'bg-red-100 text-red-600' : 'bg-green-600 text-white'}`}
                     >
                       {item.liberado ? 'Bloquear' : 'Liberar'}
                     </button>
