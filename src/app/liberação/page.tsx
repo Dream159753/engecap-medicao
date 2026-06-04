@@ -10,7 +10,8 @@ type ServicoLiberado = {
   secao: string;
   andar: string;
   servico: string;
-  quantidadeTotal: number;
+  volumeTotal: number;
+  areaTotal: number;
   quantidadeLiberada: number;
   liberado: boolean;
 };
@@ -32,7 +33,8 @@ export default function LiberacaoTarefas() {
           secao: secao.nome,
           andar: andar.nome,
           servico: "Forma + Armação + Concretagem",
-          quantidadeTotal: andar.area || 0,
+          volumeTotal: andar.volume || 0,
+          areaTotal: andar.area || 0,
           quantidadeLiberada: 0,
           liberado: false
         });
@@ -41,7 +43,8 @@ export default function LiberacaoTarefas() {
           secao: secao.nome,
           andar: andar.nome,
           servico: "Desforma",
-          quantidadeTotal: andar.area || 0,
+          volumeTotal: 0,
+          areaTotal: andar.area || 0,
           quantidadeLiberada: 0,
           liberado: false
         });
@@ -72,25 +75,27 @@ export default function LiberacaoTarefas() {
               <th className="p-4 text-left">Seção</th>
               <th className="p-4 text-left">Andar</th>
               <th className="p-4 text-left">Serviço</th>
-              <th className="p-4 text-center">Total Cadastrado (m²)</th>
-              <th className="p-4 text-center">Quantidade a Liberar</th>
+              <th className="p-4 text-center">Volume Total (m³)</th>
+              <th className="p-4 text-center">Área Total (m²)</th>
+              <th className="p-4 text-center">Qtd a Liberar</th>
               <th className="p-4 text-center">Status</th>
               <th className="p-4 text-center">Ação</th>
             </tr>
           </thead>
           <tbody>
             {servicos.map(item => (
-              <tr key={item.id} className="border-t">
-                <td className="p-4">{item.secao}</td>
+              <tr key={item.id} className="border-t hover:bg-gray-50">
+                <td className="p-4 font-medium">{item.secao}</td>
                 <td className="p-4">{item.andar}</td>
                 <td className="p-4">{item.servico}</td>
-                <td className="p-4 text-center font-semibold">{item.quantidadeTotal}</td>
+                <td className="p-4 text-center font-semibold">{item.volumeTotal}</td>
+                <td className="p-4 text-center font-semibold">{item.areaTotal}</td>
                 <td className="p-4 text-center">
                   <input 
                     type="number" 
                     value={item.quantidadeLiberada} 
                     onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value) || 0)}
-                    className="w-28 text-center border rounded py-2"
+                    className="w-24 text-center border rounded py-2"
                   />
                 </td>
                 <td className="p-4 text-center">
