@@ -13,42 +13,43 @@ type ServicoLiberado = {
 export default function LiberacaoTarefas() {
   const [servicos, setServicos] = useState<ServicoLiberado[]>([]);
 
+  // Carrega do Cadastro
   useEffect(() => {
     const secoesSalvas = localStorage.getItem('secoesObra');
-    if (!secoesSalvas) {
-      setServicos([]);
-      return;
-    }
+    if (secoesSalvas) {
+      const secoes = JSON.parse(secoesSalvas);
+      const lista: ServicoLiberado[] = [];
 
-    const secoes = JSON.parse(secoesSalvas);
-    const lista: ServicoLiberado[] = [];
-
-    secoes.forEach((secao: any, s: number) => {
-      secao.andares.forEach((andar: any, a: number) => {
-        lista.push({
-          id: s * 1000 + a * 100 + 1,
-          secao: secao.nome,
-          andar: andar.nome,
-          servico: "Forma + Armação + Concretagem",
-          liberado: false
-        });
-        lista.push({
-          id: s * 1000 + a * 100 + 2,
-          secao: secao.nome,
-          andar: andar.nome,
-          servico: "Desforma",
-          liberado: false
+      secoes.forEach((secao: any, s: number) => {
+        secao.andares.forEach((andar: any, a: number) => {
+          lista.push({
+            id: Date.now() + s * 100 + a * 10 + 1,
+            secao: secao.nome,
+            andar: andar.nome,
+            servico: "Forma + Armação + Concretagem",
+            liberado: false
+          });
+          lista.push({
+            id: Date.now() + s * 100 + a * 10 + 2,
+            secao: secao.nome,
+            andar: andar.nome,
+            servico: "Desforma",
+            liberado: false
+          });
         });
       });
-    });
-
-    setServicos(lista);
+      setServicos(lista);
+    }
   }, []);
 
   const toggleLiberacao = (id: number) => {
-    setServicos(prev => prev.map(s => 
+    const novosServicos = servicos.map(s => 
       s.id === id ? { ...s, liberado: !s.liberado } : s
-    ));
+    );
+    setServicos(novosServicos);
+    
+    // Salva no localStorage para a Medição ver
+    localStorage.setItem('servicosLiberados', JSON.stringify(novosServicos));
   };
 
   return (
@@ -70,13 +71,13 @@ export default function LiberacaoTarefas() {
             {servicos.length === 0 ? (
               <tr>
                 <td colSpan={5} className="p-16 text-center text-gray-500">
-                  Volte na tela de Cadastro de Obra e cadastre seções/andar primeiro
+                  Cadastre seções na tela de Cadastro primeiro
                 </td>
               </tr>
             ) : (
               servicos.map(item => (
                 <tr key={item.id} className="border-t hover:bg-gray-50">
-                  <td className="p-4">{item.secao}</td>
+                  <td className="p-4 font-medium">{item.secao}</td>
                   <td className="p-4">{item.andar}</td>
                   <td className="p-4">{item.servico}</td>
                   <td className="p-4 text-center">
