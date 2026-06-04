@@ -44,12 +44,19 @@ export default function MedicaoScreen() {
 
   const buscarFuncionario = () => {
     const encontrado = funcionarios.find(f => f.chapa === chapaInput);
-    if (encontrado) setFuncionarioAtual(encontrado);
-    else alert("Funcionário não encontrado!");
+    if (encontrado) {
+      setFuncionarioAtual(encontrado);
+    } else {
+      alert("Funcionário não encontrado!");
+      setFuncionarioAtual(null);
+    }
   };
 
   const adicionarMedicao = (servico: ServicoLiberado) => {
-    if (!funcionarioAtual) return alert("Busque um funcionário primeiro!");
+    if (!funcionarioAtual) {
+      alert("Busque um funcionário primeiro!");
+      return;
+    }
 
     const novo: MedicaoItem = {
       id: Date.now(),
@@ -65,6 +72,7 @@ export default function MedicaoScreen() {
     };
 
     setMedicoes([...medicoes, novo]);
+    alert(`✅ Adicionado: ${servico.servico} - ${servico.andar}`);
   };
 
   const atualizarQuantidade = (id: number, quantidade: number) => {
@@ -88,7 +96,13 @@ export default function MedicaoScreen() {
           <div className="flex-1">
             <label className="block text-sm font-medium mb-2">Chapa do Funcionário</label>
             <div className="flex gap-3">
-              <input type="text" value={chapaInput} onChange={(e) => setChapaInput(e.target.value)} placeholder="Ex: 01" className="flex-1 border border-gray-300 rounded-xl px-5 py-4 text-lg" />
+              <input 
+                type="text" 
+                value={chapaInput} 
+                onChange={(e) => setChapaInput(e.target.value)} 
+                placeholder="Ex: 01" 
+                className="flex-1 border border-gray-300 rounded-xl px-5 py-4 text-lg" 
+              />
               <button onClick={buscarFuncionario} className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-semibold">Buscar</button>
             </div>
           </div>
@@ -104,13 +118,13 @@ export default function MedicaoScreen() {
         <h3 className="font-semibold text-lg mb-4">Serviços Liberados</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
           {servicosLiberados.filter(s => s.liberado).length === 0 ? (
-            <p className="col-span-2 text-center py-12 text-gray-500">Nenhum serviço liberado ainda.</p>
+            <p className="col-span-2 text-center py-12 text-gray-500">Nenhum serviço liberado ainda. Vá na Liberação.</p>
           ) : (
             servicosLiberados.filter(s => s.liberado).map(s => (
               <button 
                 key={s.id} 
-                onClick={() => adicionarMedicao(s)} 
-                className="border-2 border-gray-200 hover:border-blue-500 p-6 rounded-2xl text-left transition-all hover:shadow-md"
+                onClick={() => adicionarMedicao(s)}
+                className="border-2 border-gray-200 hover:border-blue-600 p-6 rounded-2xl text-left transition-all hover:shadow-md active:scale-95"
               >
                 <p className="font-medium text-lg">{s.servico}</p>
                 <p className="text-gray-500">{s.secao} • {s.andar}</p>
@@ -119,7 +133,7 @@ export default function MedicaoScreen() {
           )}
         </div>
 
-        {/* Medições Lançadas */}
+        {/* Tabela de Medições Lançadas */}
         {medicoes.length > 0 && (
           <div className="mb-10">
             <h3 className="font-semibold text-lg mb-4">Medições Lançadas</h3>
@@ -137,16 +151,9 @@ export default function MedicaoScreen() {
                 {medicoes.map(m => (
                   <tr key={m.id} className="border-t">
                     <td className="p-4 font-medium">{m.nome}</td>
-                    <td className="p-4">
-                      {m.servico} <span className="text-blue-600 font-medium">- {m.andar}</span>
-                    </td>
+                    <td className="p-4">{m.servico} <span className="text-blue-600">- {m.andar}</span></td>
                     <td className="p-4 text-center">
-                      <input 
-                        type="number" 
-                        value={m.quantidade} 
-                        onChange={(e) => atualizarQuantidade(m.id, Number(e.target.value) || 0)}
-                        className="w-28 text-center border rounded-xl py-2 text-lg"
-                      />
+                      <input type="number" value={m.quantidade} onChange={(e) => atualizarQuantidade(m.id, Number(e.target.value)||0)} className="w-28 text-center border rounded-xl py-2" />
                     </td>
                     <td className="p-4 text-right">R$ {m.valorUnitario.toFixed(2)}</td>
                     <td className="p-4 text-right font-bold">R$ {m.total.toFixed(2)}</td>
@@ -157,24 +164,24 @@ export default function MedicaoScreen() {
           </div>
         )}
 
-        {/* Integração e VT Sábado */}
+        {/* Integração e VT */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 border-t pt-8">
           <div className="bg-gray-50 p-6 rounded-2xl">
-            <h4 className="font-semibold mb-3 text-lg">Integração</h4>
+            <h4 className="font-semibold mb-3">Integração</h4>
             <div className="flex items-center gap-4">
               <input type="number" value={qtIntegracao} onChange={(e) => setQtIntegracao(Number(e.target.value)||0)} className="border rounded-xl px-5 py-3 w-32 text-center text-lg" />
-              <span className="text-gray-500">× R$ 9,98</span>
+              <span>× R$ 9,98</span>
             </div>
-            <p className="text-right mt-4 font-bold text-lg">R$ {(qtIntegracao * 9.98).toFixed(2)}</p>
+            <p className="text-right mt-4 font-bold">R$ {(qtIntegracao * 9.98).toFixed(2)}</p>
           </div>
 
           <div className="bg-gray-50 p-6 rounded-2xl">
-            <h4 className="font-semibold mb-3 text-lg">VT Sábado</h4>
+            <h4 className="font-semibold mb-3">VT Sábado</h4>
             <div className="flex items-center gap-4">
               <input type="number" value={qtVTSabado} onChange={(e) => setQtVTSabado(Number(e.target.value)||0)} className="border rounded-xl px-5 py-3 w-32 text-center text-lg" />
-              <span className="text-gray-500">× R$ 19,98</span>
+              <span>× R$ 19,98</span>
             </div>
-            <p className="text-right mt-4 font-bold text-lg">R$ {(qtVTSabado * 19.98).toFixed(2)}</p>
+            <p className="text-right mt-4 font-bold">R$ {(qtVTSabado * 19.98).toFixed(2)}</p>
           </div>
         </div>
 
