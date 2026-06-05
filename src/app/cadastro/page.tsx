@@ -96,7 +96,6 @@ export default function CadastroObra() {
     <div className="p-8">
       <h2 className="text-3xl font-bold mb-8">Cadastro de Obra</h2>
       <div className="bg-white rounded-2xl shadow p-8">
-        {/* Nome e Código */}
         <div className="grid grid-cols-2 gap-6 mb-10">
           <div>
             <label className="block text-sm font-medium mb-2">Nome da Obra</label>
@@ -148,7 +147,7 @@ export default function CadastroObra() {
                   </div>
                 ))}
 
-                <button onClick={() => {}} className="text-blue-600 text-sm">+ Adicionar Serviço</button>
+                <button onClick={() => adicionarServico(i, j)} className="text-blue-600 text-sm">+ Adicionar Serviço</button>
               </div>
             ))}
 
