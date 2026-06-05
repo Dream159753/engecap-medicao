@@ -2,17 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
-type ServicoAndar = {
+type Andar = {
   nome: string;
   volume: number;
   area: number;
-  usaVolume: boolean;
-  usaArea: boolean;
-};
-
-type Andar = {
-  nome: string;
-  servicos: ServicoAndar[];
 };
 
 type Secao = {
@@ -39,50 +32,33 @@ export default function CadastroObra() {
 
   const adicionarNovaSecao = () => {
     if (!nomeNovaSecao.trim()) return alert("Digite o nome da seção!");
-    salvarNoStorage([...secoes, { 
-      nome: nomeNovaSecao.trim(), 
-      andares: [{ nome: "Térreo", servicos: [] }] 
-    }]);
+    salvarNoStorage([...secoes, { nome: nomeNovaSecao.trim(), andares: [{ nome: "Térreo", volume: 0, area: 0 }] }]);
     setNomeNovaSecao("");
     setMostrarInputNovaSecao(false);
   };
 
   const adicionarAndar = (indexSecao: number) => {
     const novas = [...secoes];
-    novas[indexSecao].andares.push({ 
-      nome: `${novas[indexSecao].andares.length + 1}º Pavimento`, 
-      servicos: [] 
-    });
+    novas[indexSecao].andares.push({ nome: `${novas[indexSecao].andares.length + 1}º Pavimento`, volume: 0, area: 0 });
     salvarNoStorage(novas);
   };
 
-  const adicionarServico = (indexSecao: number, indexAndar: number) => {
+  const atualizarAndar = (indexSecao: number, indexAndar: number, campo: string, valor: string) => {
     const novas = [...secoes];
-    novas[indexSecao].andares[indexAndar].servicos.push({
-      nome: "Novo Serviço",
-      volume: 0,
-      area: 0,
-      usaVolume: true,
-      usaArea: true
-    });
+    if (campo === 'nome') novas[indexSecao].andares[indexAndar].nome = valor;
+    else if (campo === 'volume') novas[indexSecao].andares[indexAndar].volume = Number(valor) || 0;
+    else if (campo === 'area') novas[indexSecao].andares[indexAndar].area = Number(valor) || 0;
     salvarNoStorage(novas);
   };
 
-  const atualizarServico = (indexSecao: number, indexAndar: number, indexServico: number, campo: string, valor: any) => {
-    const novas = [...secoes];
-    const serv = novas[indexSecao].andares[indexAndar].servicos[indexServico];
-    if (campo === 'nome') serv.nome = valor;
-    else if (campo === 'volume') serv.volume = Number(valor) || 0;
-    else if (campo === 'area') serv.area = Number(valor) || 0;
-    else if (campo === 'usaVolume') serv.usaVolume = valor;
-    else if (campo === 'usaArea') serv.usaArea = valor;
-    salvarNoStorage(novas);
+  const removerSecao = (index: number) => {
+    if (confirm("Excluir seção?")) salvarNoStorage(secoes.filter((_, i) => i !== index));
   };
 
-  const removerServico = (indexSecao: number, indexAndar: number, indexServico: number) => {
-    if (confirm("Excluir serviço?")) {
+  const removerAndar = (indexSecao: number, indexAndar: number) => {
+    if (confirm("Excluir andar?")) {
       const novas = [...secoes];
-      novas[indexSecao].andares[indexAndar].servicos.splice(indexServico, 1);
+      novas[indexSecao].andares.splice(indexAndar, 1);
       salvarNoStorage(novas);
     }
   };
@@ -109,45 +85,29 @@ export default function CadastroObra() {
 
         <h4 className="text-xl font-semibold mb-6">Seções da Obra</h4>
 
+        {secoes.length === 0 && <p className="text-gray-500 py-12 text-center">Nenhuma seção cadastrada.</p>}
+
         {secoes.map((secao, i) => (
           <div key={i} className="mb-10 border border-gray-200 rounded-xl p-6 bg-gray-50">
             <div className="flex justify-between mb-4">
               <h5 className="text-lg font-semibold">🏗️ {secao.nome}</h5>
-              <button onClick={() => {}} className="text-red-600">Excluir Seção</button>
+              <button onClick={() => removerSecao(i)} className="text-red-600">Excluir</button>
             </div>
 
             {secao.andares.map((andar, j) => (
-              <div key={j} className="mb-8 p-4 bg-white rounded-lg border">
-                <div className="flex justify-between mb-4">
-                  <h6 className="font-medium">{andar.nome}</h6>
-                  <button onClick={() => {}} className="text-red-600 text-sm">Excluir Andar</button>
+              <div key={j} className="grid grid-cols-3 gap-4 mb-4 p-4 bg-white rounded-lg border">
+                <div>
+                  <label className="text-sm block mb-1">Nome do Andar</label>
+                  <input type="text" value={andar.nome} onChange={(e) => atualizarAndar(i, j, 'nome', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
                 </div>
-
-                {andar.servicos.map((serv, k) => (
-                  <div key={k} className="grid grid-cols-12 gap-3 mb-4 p-4 border rounded-lg">
-                    <div className="col-span-5">
-                      <label className="text-sm">Nome do Serviço</label>
-                      <input type="text" value={serv.nome} onChange={(e) => atualizarServico(i, j, k, 'nome', e.target.value)} className="w-full border rounded px-3 py-2" />
-                    </div>
-                    <div className="col-span-3">
-                      <label className="text-sm flex items-center gap-2">
-                        Volume (m³) <input type="checkbox" checked={serv.usaVolume} onChange={(e) => atualizarServico(i, j, k, 'usaVolume', e.target.checked)} />
-                      </label>
-                      <input type="number" value={serv.volume} onChange={(e) => atualizarServico(i, j, k, 'volume', e.target.value)} disabled={!serv.usaVolume} className="w-full border rounded px-3 py-2" />
-                    </div>
-                    <div className="col-span-3">
-                      <label className="text-sm flex items-center gap-2">
-                        Área (m²) <input type="checkbox" checked={serv.usaArea} onChange={(e) => atualizarServico(i, j, k, 'usaArea', e.target.checked)} />
-                      </label>
-                      <input type="number" value={serv.area} onChange={(e) => atualizarServico(i, j, k, 'area', e.target.value)} disabled={!serv.usaArea} className="w-full border rounded px-3 py-2" />
-                    </div>
-                    <div className="col-span-1 flex items-end">
-                      <button onClick={() => removerServico(i, j, k)} className="text-red-600">×</button>
-                    </div>
-                  </div>
-                ))}
-
-                <button onClick={() => adicionarServico(i, j)} className="text-blue-600 text-sm">+ Adicionar Serviço</button>
+                <div>
+                  <label className="text-sm block mb-1">Volume Total (m³)</label>
+                  <input type="number" value={andar.volume || ""} onChange={(e) => atualizarAndar(i, j, 'volume', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label className="text-sm block mb-1">Área Total (m²)</label>
+                  <input type="number" value={andar.area || ""} onChange={(e) => atualizarAndar(i, j, 'area', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
+                </div>
               </div>
             ))}
 
