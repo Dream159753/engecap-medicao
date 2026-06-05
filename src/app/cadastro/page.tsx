@@ -5,9 +5,7 @@ import { useState, useEffect } from 'react';
 type Andar = {
   nome: string;
   volume: number;
-  area: number;
   usaVolume: boolean;
-  usaArea: boolean;
 };
 
 type Secao = {
@@ -36,7 +34,7 @@ export default function CadastroObra() {
     if (!nomeNovaSecao.trim()) return alert("Digite o nome da seção!");
     salvarNoStorage([...secoes, { 
       nome: nomeNovaSecao.trim(), 
-      andares: [{ nome: "Térreo", volume: 0, area: 0, usaVolume: true, usaArea: true }] 
+      andares: [{ nome: "Térreo", volume: 0, usaVolume: true }] 
     }]);
     setNomeNovaSecao("");
     setMostrarInputNovaSecao(false);
@@ -47,9 +45,7 @@ export default function CadastroObra() {
     novas[indexSecao].andares.push({ 
       nome: `${novas[indexSecao].andares.length + 1}º Pavimento`, 
       volume: 0, 
-      area: 0,
-      usaVolume: true,
-      usaArea: true 
+      usaVolume: true 
     });
     salvarNoStorage(novas);
   };
@@ -60,9 +56,7 @@ export default function CadastroObra() {
     
     if (campo === 'nome') andar.nome = valor;
     else if (campo === 'volume') andar.volume = Number(valor) || 0;
-    else if (campo === 'area') andar.area = Number(valor) || 0;
     else if (campo === 'usaVolume') andar.usaVolume = valor;
-    else if (campo === 'usaArea') andar.usaArea = valor;
 
     salvarNoStorage(novas);
   };
@@ -116,12 +110,12 @@ export default function CadastroObra() {
                 </div>
 
                 <div className="grid grid-cols-12 gap-4">
-                  <div className="col-span-4">
+                  <div className="col-span-5">
                     <label className="text-sm block mb-1">Nome do Andar</label>
                     <input type="text" value={andar.nome} onChange={(e) => atualizarAndar(i, j, 'nome', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
                   </div>
 
-                  <div className="col-span-4">
+                  <div className="col-span-7">
                     <label className="text-sm flex items-center gap-2 mb-1">
                       Volume Total (m³) 
                       <input type="checkbox" checked={andar.usaVolume} onChange={(e) => atualizarAndar(i, j, 'usaVolume', e.target.checked)} className="w-4 h-4" />
@@ -131,20 +125,6 @@ export default function CadastroObra() {
                       value={andar.volume || ""} 
                       onChange={(e) => atualizarAndar(i, j, 'volume', e.target.value)} 
                       disabled={!andar.usaVolume}
-                      className="w-full border rounded-lg px-3 py-2" 
-                    />
-                  </div>
-
-                  <div className="col-span-4">
-                    <label className="text-sm flex items-center gap-2 mb-1">
-                      Área Total (m²) 
-                      <input type="checkbox" checked={andar.usaArea} onChange={(e) => atualizarAndar(i, j, 'usaArea', e.target.checked)} className="w-4 h-4" />
-                    </label>
-                    <input 
-                      type="number" 
-                      value={andar.area || ""} 
-                      onChange={(e) => atualizarAndar(i, j, 'area', e.target.value)} 
-                      disabled={!andar.usaArea}
                       className="w-full border rounded-lg px-3 py-2" 
                     />
                   </div>
