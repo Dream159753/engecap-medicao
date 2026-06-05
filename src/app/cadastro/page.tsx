@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from 'react';
 
-type Andar = { nome: string; volume: number; area: number };
+type Andar = {
+  nome: string;
+  volume: number;
+  area: number;
+  usaVolume: boolean;
+  usaArea: boolean;
+};
+
 type Secao = { nome: string; andares: Andar[] };
 
 export default function CadastroObra() {
@@ -24,22 +31,33 @@ export default function CadastroObra() {
 
   const adicionarNovaSecao = () => {
     if (!nomeNovaSecao.trim()) return alert("Digite o nome da seção!");
-    salvarNoStorage([...secoes, { nome: nomeNovaSecao.trim(), andares: [{ nome: "Térreo", volume: 0, area: 0 }] }]);
+    salvarNoStorage([...secoes, { 
+      nome: nomeNovaSecao.trim(), 
+      andares: [{ nome: "Térreo", volume: 0, area: 0, usaVolume: true, usaArea: true }] 
+    }]);
     setNomeNovaSecao("");
     setMostrarInputNovaSecao(false);
   };
 
   const adicionarAndar = (indexSecao: number) => {
     const novas = [...secoes];
-    novas[indexSecao].andares.push({ nome: `${novas[indexSecao].andares.length + 1}º Pavimento`, volume: 0, area: 0 });
+    novas[indexSecao].andares.push({ 
+      nome: `${novas[indexSecao].andares.length + 1}º Pavimento`, 
+      volume: 0, 
+      area: 0,
+      usaVolume: true,
+      usaArea: true 
+    });
     salvarNoStorage(novas);
   };
 
-  const atualizarAndar = (indexSecao: number, indexAndar: number, campo: 'nome' | 'volume' | 'area', valor: string) => {
+  const atualizarAndar = (indexSecao: number, indexAndar: number, campo: string, valor: any) => {
     const novas = [...secoes];
     if (campo === 'nome') novas[indexSecao].andares[indexAndar].nome = valor;
     else if (campo === 'volume') novas[indexSecao].andares[indexAndar].volume = Number(valor) || 0;
-    else novas[indexSecao].andares[indexAndar].area = Number(valor) || 0;
+    else if (campo === 'area') novas[indexSecao].andares[indexAndar].area = Number(valor) || 0;
+    else if (campo === 'usaVolume') novas[indexSecao].andares[indexAndar].usaVolume = valor;
+    else if (campo === 'usaArea') novas[indexSecao].andares[indexAndar].usaArea = valor;
     salvarNoStorage(novas);
   };
 
@@ -64,6 +82,7 @@ export default function CadastroObra() {
     <div className="p-8">
       <h2 className="text-3xl font-bold mb-8">Cadastro de Obra</h2>
       <div className="bg-white rounded-2xl shadow p-8">
+        {/* Nome e Código da Obra */}
         <div className="grid grid-cols-2 gap-6 mb-10">
           <div>
             <label className="block text-sm font-medium mb-2">Nome da Obra</label>
@@ -83,22 +102,33 @@ export default function CadastroObra() {
               <h5 className="text-lg font-semibold">🏗️ {secao.nome}</h5>
               <button onClick={() => removerSecao(i)} className="text-red-600">Excluir</button>
             </div>
+
             {secao.andares.map((andar, j) => (
-              <div key={j} className="grid grid-cols-3 gap-4 mb-4 p-4 bg-white rounded-lg border">
-                <div>
+              <div key={j} className="grid grid-cols-12 gap-4 mb-4 p-4 bg-white rounded-lg border items-end">
+                <div className="col-span-3">
                   <label className="text-sm block mb-1">Nome do Andar</label>
                   <input type="text" value={andar.nome} onChange={(e) => atualizarAndar(i, j, 'nome', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
                 </div>
-                <div>
-                  <label className="text-sm block mb-1">Volume Total (m³)</label>
-                  <input type="number" value={andar.volume || ""} onChange={(e) => atualizarAndar(i, j, 'volume', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
+                <div className="col-span-3">
+                  <label className="text-sm block mb-1 flex items-center gap-2">
+                    Volume Total (m³) 
+                    <input type="checkbox" checked={andar.usaVolume} onChange={(e) => atualizarAndar(i, j, 'usaVolume', e.target.checked)} className="w-4 h-4" />
+                  </label>
+                  <input type="number" value={andar.volume || ""} onChange={(e) => atualizarAndar(i, j, 'volume', e.target.value)} className="w-full border rounded-lg px-3 py-2" disabled={!andar.usaVolume} />
                 </div>
-                <div>
-                  <label className="text-sm block mb-1">Área Total (m²)</label>
-                  <input type="number" value={andar.area || ""} onChange={(e) => atualizarAndar(i, j, 'area', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
+                <div className="col-span-3">
+                  <label className="text-sm block mb-1 flex items-center gap-2">
+                    Área Total (m²) 
+                    <input type="checkbox" checked={andar.usaArea} onChange={(e) => atualizarAndar(i, j, 'usaArea', e.target.checked)} className="w-4 h-4" />
+                  </label>
+                  <input type="number" value={andar.area || ""} onChange={(e) => atualizarAndar(i, j, 'area', e.target.value)} className="w-full border rounded-lg px-3 py-2" disabled={!andar.usaArea} />
+                </div>
+                <div className="col-span-3">
+                  <button onClick={() => removerAndar(i, j)} className="text-red-600 text-sm w-full">Excluir Andar</button>
                 </div>
               </div>
             ))}
+
             <button onClick={() => adicionarAndar(i)} className="text-blue-600">+ Adicionar Andar</button>
           </div>
         ))}
