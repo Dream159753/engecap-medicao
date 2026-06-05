@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-type Andar = {
+type ServicoAndar = {
   nome: string;
   volume: number;
   area: number;
@@ -10,7 +10,15 @@ type Andar = {
   usaArea: boolean;
 };
 
-type Secao = { nome: string; andares: Andar[] };
+type Andar = {
+  nome: string;
+  servicos: ServicoAndar[];
+};
+
+type Secao = {
+  nome: string;
+  andares: Andar[];
+};
 
 export default function CadastroObra() {
   const [obra, setObra] = useState({ nome: "Faena", numero: "325" });
@@ -33,7 +41,7 @@ export default function CadastroObra() {
     if (!nomeNovaSecao.trim()) return alert("Digite o nome da seção!");
     salvarNoStorage([...secoes, { 
       nome: nomeNovaSecao.trim(), 
-      andares: [{ nome: "Térreo", volume: 0, area: 0, usaVolume: true, usaArea: true }] 
+      andares: [{ nome: "Térreo", servicos: [] }] 
     }]);
     setNomeNovaSecao("");
     setMostrarInputNovaSecao(false);
@@ -43,32 +51,38 @@ export default function CadastroObra() {
     const novas = [...secoes];
     novas[indexSecao].andares.push({ 
       nome: `${novas[indexSecao].andares.length + 1}º Pavimento`, 
-      volume: 0, 
-      area: 0,
-      usaVolume: true,
-      usaArea: true 
+      servicos: [] 
     });
     salvarNoStorage(novas);
   };
 
-  const atualizarAndar = (indexSecao: number, indexAndar: number, campo: string, valor: any) => {
+  const adicionarServico = (indexSecao: number, indexAndar: number) => {
     const novas = [...secoes];
-    if (campo === 'nome') novas[indexSecao].andares[indexAndar].nome = valor;
-    else if (campo === 'volume') novas[indexSecao].andares[indexAndar].volume = Number(valor) || 0;
-    else if (campo === 'area') novas[indexSecao].andares[indexAndar].area = Number(valor) || 0;
-    else if (campo === 'usaVolume') novas[indexSecao].andares[indexAndar].usaVolume = valor;
-    else if (campo === 'usaArea') novas[indexSecao].andares[indexAndar].usaArea = valor;
+    novas[indexSecao].andares[indexAndar].servicos.push({
+      nome: "Novo Serviço",
+      volume: 0,
+      area: 0,
+      usaVolume: true,
+      usaArea: true
+    });
     salvarNoStorage(novas);
   };
 
-  const removerSecao = (index: number) => {
-    if (confirm("Excluir seção?")) salvarNoStorage(secoes.filter((_, i) => i !== index));
+  const atualizarServico = (indexSecao: number, indexAndar: number, indexServico: number, campo: string, valor: any) => {
+    const novas = [...secoes];
+    const serv = novas[indexSecao].andares[indexAndar].servicos[indexServico];
+    if (campo === 'nome') serv.nome = valor;
+    else if (campo === 'volume') serv.volume = Number(valor) || 0;
+    else if (campo === 'area') serv.area = Number(valor) || 0;
+    else if (campo === 'usaVolume') serv.usaVolume = valor;
+    else if (campo === 'usaArea') serv.usaArea = valor;
+    salvarNoStorage(novas);
   };
 
-  const removerAndar = (indexSecao: number, indexAndar: number) => {
-    if (confirm("Excluir andar?")) {
+  const removerServico = (indexSecao: number, indexAndar: number, indexServico: number) => {
+    if (confirm("Excluir serviço?")) {
       const novas = [...secoes];
-      novas[indexSecao].andares.splice(indexAndar, 1);
+      novas[indexSecao].andares[indexAndar].servicos.splice(indexServico, 1);
       salvarNoStorage(novas);
     }
   };
@@ -82,7 +96,7 @@ export default function CadastroObra() {
     <div className="p-8">
       <h2 className="text-3xl font-bold mb-8">Cadastro de Obra</h2>
       <div className="bg-white rounded-2xl shadow p-8">
-        {/* Nome e Código da Obra */}
+        {/* Nome e Código */}
         <div className="grid grid-cols-2 gap-6 mb-10">
           <div>
             <label className="block text-sm font-medium mb-2">Nome da Obra</label>
@@ -100,32 +114,41 @@ export default function CadastroObra() {
           <div key={i} className="mb-10 border border-gray-200 rounded-xl p-6 bg-gray-50">
             <div className="flex justify-between mb-4">
               <h5 className="text-lg font-semibold">🏗️ {secao.nome}</h5>
-              <button onClick={() => removerSecao(i)} className="text-red-600">Excluir</button>
+              <button onClick={() => {}} className="text-red-600">Excluir Seção</button>
             </div>
 
             {secao.andares.map((andar, j) => (
-              <div key={j} className="grid grid-cols-12 gap-4 mb-4 p-4 bg-white rounded-lg border items-end">
-                <div className="col-span-3">
-                  <label className="text-sm block mb-1">Nome do Andar</label>
-                  <input type="text" value={andar.nome} onChange={(e) => atualizarAndar(i, j, 'nome', e.target.value)} className="w-full border rounded-lg px-3 py-2" />
+              <div key={j} className="mb-8 p-4 bg-white rounded-lg border">
+                <div className="flex justify-between mb-4">
+                  <h6 className="font-medium">{andar.nome}</h6>
+                  <button onClick={() => {}} className="text-red-600 text-sm">Excluir Andar</button>
                 </div>
-                <div className="col-span-3">
-                  <label className="text-sm block mb-1 flex items-center gap-2">
-                    Volume Total (m³) 
-                    <input type="checkbox" checked={andar.usaVolume} onChange={(e) => atualizarAndar(i, j, 'usaVolume', e.target.checked)} className="w-4 h-4" />
-                  </label>
-                  <input type="number" value={andar.volume || ""} onChange={(e) => atualizarAndar(i, j, 'volume', e.target.value)} className="w-full border rounded-lg px-3 py-2" disabled={!andar.usaVolume} />
-                </div>
-                <div className="col-span-3">
-                  <label className="text-sm block mb-1 flex items-center gap-2">
-                    Área Total (m²) 
-                    <input type="checkbox" checked={andar.usaArea} onChange={(e) => atualizarAndar(i, j, 'usaArea', e.target.checked)} className="w-4 h-4" />
-                  </label>
-                  <input type="number" value={andar.area || ""} onChange={(e) => atualizarAndar(i, j, 'area', e.target.value)} className="w-full border rounded-lg px-3 py-2" disabled={!andar.usaArea} />
-                </div>
-                <div className="col-span-3">
-                  <button onClick={() => removerAndar(i, j)} className="text-red-600 text-sm w-full">Excluir Andar</button>
-                </div>
+
+                {andar.servicos.map((serv, k) => (
+                  <div key={k} className="grid grid-cols-12 gap-3 mb-4 p-4 border rounded-lg">
+                    <div className="col-span-5">
+                      <label className="text-sm">Nome do Serviço</label>
+                      <input type="text" value={serv.nome} onChange={(e) => atualizarServico(i, j, k, 'nome', e.target.value)} className="w-full border rounded px-3 py-2" />
+                    </div>
+                    <div className="col-span-3">
+                      <label className="text-sm flex items-center gap-2">
+                        Volume (m³) <input type="checkbox" checked={serv.usaVolume} onChange={(e) => atualizarServico(i, j, k, 'usaVolume', e.target.checked)} />
+                      </label>
+                      <input type="number" value={serv.volume} onChange={(e) => atualizarServico(i, j, k, 'volume', e.target.value)} disabled={!serv.usaVolume} className="w-full border rounded px-3 py-2" />
+                    </div>
+                    <div className="col-span-3">
+                      <label className="text-sm flex items-center gap-2">
+                        Área (m²) <input type="checkbox" checked={serv.usaArea} onChange={(e) => atualizarServico(i, j, k, 'usaArea', e.target.checked)} />
+                      </label>
+                      <input type="number" value={serv.area} onChange={(e) => atualizarServico(i, j, k, 'area', e.target.value)} disabled={!serv.usaArea} className="w-full border rounded px-3 py-2" />
+                    </div>
+                    <div className="col-span-1 flex items-end">
+                      <button onClick={() => removerServico(i, j, k)} className="text-red-600">×</button>
+                    </div>
+                  </div>
+                ))}
+
+                <button onClick={() => {}} className="text-blue-600 text-sm">+ Adicionar Serviço</button>
               </div>
             ))}
 
