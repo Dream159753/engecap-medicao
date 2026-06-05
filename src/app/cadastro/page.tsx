@@ -29,20 +29,23 @@ export default function CadastroObra() {
 
   useEffect(() => {
     const salvo = localStorage.getItem('secoesObra');
-    if (salvo) setSecoes(JSON.parse(salvo));
+    if (salvo) {
+      setSecoes(JSON.parse(salvo));
+    }
   }, []);
 
-  const salvarNoStorage = (novas: Secao[]) => {
-    setSecoes(novas);
-    localStorage.setItem('secoesObra', JSON.stringify(novas));
+  const salvarNoStorage = (novasSecoes: Secao[]) => {
+    setSecoes(novasSecoes);
+    localStorage.setItem('secoesObra', JSON.stringify(novasSecoes));
   };
 
   const adicionarNovaSecao = () => {
     if (!nomeNovaSecao.trim()) return alert("Digite o nome da seção!");
-    salvarNoStorage([...secoes, { 
-      nome: nomeNovaSecao.trim(), 
-      andares: [{ nome: "Térreo", servicos: [] }] 
-    }]);
+    const novaSecao: Secao = {
+      nome: nomeNovaSecao.trim(),
+      andares: [{ nome: "Térreo", servicos: [] }]
+    };
+    salvarNoStorage([...secoes, novaSecao]);
     setNomeNovaSecao("");
     setMostrarInputNovaSecao(false);
   };
@@ -82,7 +85,7 @@ export default function CadastroObra() {
   };
 
   const removerServico = (indexSecao: number, indexAndar: number, indexServico: number) => {
-    if (confirm("Excluir serviço?")) {
+    if (confirm("Excluir este serviço?")) {
       const novas = [...secoes];
       novas[indexSecao].andares[indexAndar].servicos.splice(indexServico, 1);
       salvarNoStorage(novas);
@@ -90,7 +93,6 @@ export default function CadastroObra() {
   };
 
   const salvarObra = () => {
-    if (secoes.length === 0) return alert("Adicione pelo menos uma seção!");
     alert("✅ Obra salva com sucesso!");
   };
 
@@ -98,6 +100,7 @@ export default function CadastroObra() {
     <div className="p-8">
       <h2 className="text-3xl font-bold mb-8">Cadastro de Obra</h2>
       <div className="bg-white rounded-2xl shadow p-8">
+
         <div className="grid grid-cols-2 gap-6 mb-10">
           <div>
             <label className="block text-sm font-medium mb-2">Nome da Obra</label>
@@ -115,14 +118,12 @@ export default function CadastroObra() {
           <div key={i} className="mb-10 border border-gray-200 rounded-xl p-6 bg-gray-50">
             <div className="flex justify-between mb-4">
               <h5 className="text-lg font-semibold">🏗️ {secao.nome}</h5>
-              <button onClick={() => {}} className="text-red-600">Excluir Seção</button>
             </div>
 
             {secao.andares.map((andar, j) => (
               <div key={j} className="mb-8 p-5 bg-white rounded-lg border">
                 <div className="flex justify-between mb-4">
                   <h6 className="font-medium">{andar.nome}</h6>
-                  <button onClick={() => {}} className="text-red-600 text-sm">Excluir Andar</button>
                 </div>
 
                 {andar.servicos.map((serv, k) => (
@@ -134,7 +135,7 @@ export default function CadastroObra() {
                         value={serv.nome} 
                         onChange={(e) => atualizarServico(i, j, k, 'nome', e.target.value)} 
                         className="w-full border rounded-lg px-4 py-3" 
-                        placeholder="Ex: Concretagem, Alvenaria, etc."
+                        placeholder="Ex: Concretagem, Alvenaria Estrutural, Desforma..."
                       />
                     </div>
                     <div className="col-span-3">
@@ -151,13 +152,13 @@ export default function CadastroObra() {
                       </label>
                       <input type="number" value={serv.area} onChange={(e) => atualizarServico(i, j, k, 'area', e.target.value)} disabled={!serv.usaArea} className="w-full border rounded-lg px-4 py-3" />
                     </div>
-                    <div className="col-span-1 flex items-end pb-1">
-                      <button onClick={() => {}} className="text-red-600 text-xl">×</button>
+                    <div className="col-span-1 flex items-end">
+                      <button onClick={() => removerServico(i, j, k)} className="text-red-600 text-2xl">×</button>
                     </div>
                   </div>
                 ))}
 
-                <button onClick={() => adicionarServico(i, j)} className="text-blue-600 text-sm font-medium">+ Adicionar Serviço / Tarefa</button>
+                <button onClick={() => adicionarServico(i, j)} className="text-blue-600">+ Adicionar Serviço</button>
               </div>
             ))}
 
@@ -170,7 +171,7 @@ export default function CadastroObra() {
             <button onClick={() => setMostrarInputNovaSecao(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg">+ Nova Seção</button>
           ) : (
             <div className="flex gap-3">
-              <input value={nomeNovaSecao} onChange={(e) => setNomeNovaSecao(e.target.value)} placeholder="Ex: Torre B" className="border rounded-lg px-4 py-3 flex-1" />
+              <input value={nomeNovaSecao} onChange={(e) => setNomeNovaSecao(e.target.value)} placeholder="Ex: Torre B ou Periferia" className="border rounded-lg px-4 py-3 flex-1" />
               <button onClick={adicionarNovaSecao} className="bg-green-600 text-white px-6 py-3 rounded-lg">Adicionar</button>
             </div>
           )}
