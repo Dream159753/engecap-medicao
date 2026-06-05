@@ -23,39 +23,32 @@ type Secao = {
 export default function CadastroObra() {
   const [obra, setObra] = useState({ nome: "Faena", numero: "325" });
   const [secoes, setSecoes] = useState<Secao[]>([]);
-
   const [mostrarInputNovaSecao, setMostrarInputNovaSecao] = useState(false);
   const [nomeNovaSecao, setNomeNovaSecao] = useState("");
 
   useEffect(() => {
     const salvo = localStorage.getItem('secoesObra');
-    if (salvo) {
-      setSecoes(JSON.parse(salvo));
-    }
+    if (salvo) setSecoes(JSON.parse(salvo));
   }, []);
 
-  const salvarNoStorage = (novasSecoes: Secao[]) => {
-    setSecoes(novasSecoes);
-    localStorage.setItem('secoesObra', JSON.stringify(novasSecoes));
+  const salvarNoStorage = (novas: Secao[]) => {
+    setSecoes(novas);
+    localStorage.setItem('secoesObra', JSON.stringify(novas));
   };
 
   const adicionarNovaSecao = () => {
     if (!nomeNovaSecao.trim()) return alert("Digite o nome da seção!");
-    const novaSecao: Secao = {
-      nome: nomeNovaSecao.trim(),
-      andares: [{ nome: "Térreo", servicos: [] }]
-    };
-    salvarNoStorage([...secoes, novaSecao]);
+    salvarNoStorage([...secoes, { 
+      nome: nomeNovaSecao.trim(), 
+      andares: [{ nome: "Térreo", servicos: [] }] 
+    }]);
     setNomeNovaSecao("");
     setMostrarInputNovaSecao(false);
   };
 
   const adicionarAndar = (indexSecao: number) => {
     const novas = [...secoes];
-    novas[indexSecao].andares.push({ 
-      nome: `${novas[indexSecao].andares.length + 1}º Pavimento`, 
-      servicos: [] 
-    });
+    novas[indexSecao].andares.push({ nome: `${novas[indexSecao].andares.length + 1}º Pavimento`, servicos: [] });
     salvarNoStorage(novas);
   };
 
@@ -74,26 +67,20 @@ export default function CadastroObra() {
   const atualizarServico = (indexSecao: number, indexAndar: number, indexServico: number, campo: string, valor: any) => {
     const novas = [...secoes];
     const serv = novas[indexSecao].andares[indexAndar].servicos[indexServico];
-    
     if (campo === 'nome') serv.nome = valor;
-    else if (campo === 'volume') serv.volume = Number(valor) || 0;
-    else if (campo === 'area') serv.area = Number(valor) || 0;
-    else if (campo === 'usaVolume') serv.usaVolume = valor;
-    else if (campo === 'usaArea') serv.usaArea = valor;
-
+    if (campo === 'volume') serv.volume = Number(valor) || 0;
+    if (campo === 'area') serv.area = Number(valor) || 0;
+    if (campo === 'usaVolume') serv.usaVolume = valor;
+    if (campo === 'usaArea') serv.usaArea = valor;
     salvarNoStorage(novas);
   };
 
   const removerServico = (indexSecao: number, indexAndar: number, indexServico: number) => {
-    if (confirm("Excluir este serviço?")) {
+    if (confirm("Excluir serviço?")) {
       const novas = [...secoes];
       novas[indexSecao].andares[indexAndar].servicos.splice(indexServico, 1);
       salvarNoStorage(novas);
     }
-  };
-
-  const salvarObra = () => {
-    alert("✅ Obra salva com sucesso!");
   };
 
   return (
@@ -112,19 +99,15 @@ export default function CadastroObra() {
           </div>
         </div>
 
-        <h4 className="text-xl font-semibold mb-6">Seções da Obra</h4>
+        <h4 className="text-xl font-semibold mb-6">Seções / Torres</h4>
 
         {secoes.map((secao, i) => (
           <div key={i} className="mb-10 border border-gray-200 rounded-xl p-6 bg-gray-50">
-            <div className="flex justify-between mb-4">
-              <h5 className="text-lg font-semibold">🏗️ {secao.nome}</h5>
-            </div>
+            <h5 className="text-lg font-semibold mb-4">🏗️ {secao.nome}</h5>
 
             {secao.andares.map((andar, j) => (
               <div key={j} className="mb-8 p-5 bg-white rounded-lg border">
-                <div className="flex justify-between mb-4">
-                  <h6 className="font-medium">{andar.nome}</h6>
-                </div>
+                <h6 className="font-medium mb-4">{andar.nome}</h6>
 
                 {andar.servicos.map((serv, k) => (
                   <div key={k} className="grid grid-cols-12 gap-4 mb-6 p-4 border rounded-lg">
@@ -134,26 +117,20 @@ export default function CadastroObra() {
                         type="text" 
                         value={serv.nome} 
                         onChange={(e) => atualizarServico(i, j, k, 'nome', e.target.value)} 
-                        className="w-full border rounded-lg px-4 py-3" 
-                        placeholder="Ex: Concretagem, Alvenaria Estrutural, Desforma..."
+                        className="w-full border rounded-lg px-4 py-3"
+                        placeholder="Ex: Concretagem, Desforma, Alvenaria..."
                       />
                     </div>
                     <div className="col-span-3">
-                      <label className="text-sm flex items-center gap-2 mb-1">
-                        Volume (m³) 
-                        <input type="checkbox" checked={serv.usaVolume} onChange={(e) => atualizarServico(i, j, k, 'usaVolume', e.target.checked)} />
-                      </label>
+                      <label className="text-sm flex items-center gap-2 mb-1">Volume (m³) <input type="checkbox" checked={serv.usaVolume} onChange={(e) => atualizarServico(i, j, k, 'usaVolume', e.target.checked)} /></label>
                       <input type="number" value={serv.volume} onChange={(e) => atualizarServico(i, j, k, 'volume', e.target.value)} disabled={!serv.usaVolume} className="w-full border rounded-lg px-4 py-3" />
                     </div>
                     <div className="col-span-3">
-                      <label className="text-sm flex items-center gap-2 mb-1">
-                        Área (m²) 
-                        <input type="checkbox" checked={serv.usaArea} onChange={(e) => atualizarServico(i, j, k, 'usaArea', e.target.checked)} />
-                      </label>
+                      <label className="text-sm flex items-center gap-2 mb-1">Área (m²) <input type="checkbox" checked={serv.usaArea} onChange={(e) => atualizarServico(i, j, k, 'usaArea', e.target.checked)} /></label>
                       <input type="number" value={serv.area} onChange={(e) => atualizarServico(i, j, k, 'area', e.target.value)} disabled={!serv.usaArea} className="w-full border rounded-lg px-4 py-3" />
                     </div>
                     <div className="col-span-1 flex items-end">
-                      <button onClick={() => removerServico(i, j, k)} className="text-red-600 text-2xl">×</button>
+                      <button onClick={() => removerServico(i, j, k)} className="text-red-600 text-3xl">×</button>
                     </div>
                   </div>
                 ))}
@@ -166,19 +143,12 @@ export default function CadastroObra() {
           </div>
         ))}
 
-        <div className="mt-6">
-          {!mostrarInputNovaSecao ? (
-            <button onClick={() => setMostrarInputNovaSecao(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg">+ Nova Seção</button>
-          ) : (
-            <div className="flex gap-3">
-              <input value={nomeNovaSecao} onChange={(e) => setNomeNovaSecao(e.target.value)} placeholder="Ex: Torre B ou Periferia" className="border rounded-lg px-4 py-3 flex-1" />
-              <button onClick={adicionarNovaSecao} className="bg-green-600 text-white px-6 py-3 rounded-lg">Adicionar</button>
-            </div>
-          )}
+        <div className="mt-8">
+          <button onClick={() => setMostrarInputNovaSecao(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg">+ Nova Seção</button>
         </div>
 
         <div className="mt-10 flex justify-end">
-          <button onClick={salvarObra} className="bg-green-600 text-white px-10 py-4 rounded-2xl font-semibold text-lg">Salvar Obra Completa</button>
+          <button className="bg-green-600 text-white px-10 py-4 rounded-2xl font-semibold text-lg">Salvar Obra Completa</button>
         </div>
       </div>
     </div>
