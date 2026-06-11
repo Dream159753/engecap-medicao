@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 
 type ServicoLiberado = {
-  id: number;
   secao: string;
   andar: string;
-  servico: string;
+  volumeTotal: number;
+  volumeLiberado: number;
+  trecho: string;
   liberado: boolean;
 };
 
@@ -15,46 +16,49 @@ type MedicaoItem = {
   chapa: string;
   nome: string;
   funcao: string;
-  secao: string;
-  andar: string;
   servico: string;
   quantidade: number;
   valorUnitario: number;
   total: number;
 };
 
-export default function MedicaoScreen() {
+export default function LancamentoMedicao() {
   const [servicosLiberados, setServicosLiberados] = useState<ServicoLiberado[]>([]);
   const [medicoes, setMedicoes] = useState<MedicaoItem[]>([]);
-  const [chapaInput, setChapaInput] = useState("");
+  const [chapa, setChapa] = useState("");
   const [funcionarioAtual, setFuncionarioAtual] = useState<any>(null);
 
   const [qtIntegracao, setQtIntegracao] = useState(0);
   const [qtVTSabado, setQtVTSabado] = useState(0);
 
-  const funcionarios = [
-    { chapa: "01", nome: "João da Silva", funcao: "Carpinteiro" },
-    { chapa: "02", nome: "Maria Santos", funcao: "Armadora" },
+  const funcionariosDB = [
+    { chapa: "1001", nome: "João da Silva", funcao: "Carpinteiro" },
+    { chapa: "1002", nome: "Maria Oliveira", funcao: "Armador" },
+    { chapa: "1003", nome: "Pedro Santos", funcao: "Pedreiro" },
   ];
 
   useEffect(() => {
     const salvo = localStorage.getItem('servicosLiberados');
-    if (salvo) setServicosLiberados(JSON.parse(salvo));
+    if (salvo) {
+      const dados: ServicoLiberado[] = JSON.parse(salvo);
+      const apenasLiberados = dados.filter(s => s.liberado === true);
+      setServicosLiberados(apenasLiberados);
+    }
   }, []);
 
   const buscarFuncionario = () => {
-    const encontrado = funcionarios.find(f => f.chapa === chapaInput);
+    const encontrado = funcionariosDB.find(f => f.chapa === chapa.trim());
     if (encontrado) {
       setFuncionarioAtual(encontrado);
     } else {
-      alert("Funcionário não encontrado!");
+      alert("Funcionário não encontrado com esta chapa!");
       setFuncionarioAtual(null);
     }
   };
 
-  const adicionarMedicao = (servico: ServicoLiberado) => {
+  const adicionarMedicao = (liberado: ServicoLiberado) => {
     if (!funcionarioAtual) {
-      alert("Busque um funcionário primeiro!");
+      alert("Busque um funcionário pela chapa primeiro!");
       return;
     }
 
@@ -63,22 +67,20 @@ export default function MedicaoScreen() {
       chapa: funcionarioAtual.chapa,
       nome: funcionarioAtual.nome,
       funcao: funcionarioAtual.funcao,
-      secao: servico.secao,
-      andar: servico.andar,
-      servico: servico.servico,
-      quantidade: 0,
-      valorUnitario: servico.servico.includes("Forma") ? 85.50 : 32.00,
-      total: 0
+      servico: `${liberado.trecho || 'Serviço'} - ${liberado.andar}`,
+      quantidade: liberado.volumeLiberado, // já sugere o valor liberado
+      valorUnitario: 150, // ajuste depois
+      total: liberado.volumeLiberado * 150
     };
 
     setMedicoes([...medicoes, novo]);
-    alert(`✅ Adicionado: ${servico.servico} - ${servico.andar}`);
   };
 
-  const atualizarQuantidade = (id: number, quantidade: number) => {
-    setMedicoes(medicoes.map(m => 
-      m.id === id ? { ...m, quantidade, total: quantidade * m.valorUnitario } : m
-    ));
+  const atualizarQuantidade = (id: number, qtd: number) => {
+    const novos = medicoes.map(m => 
+      m.id === id ? { ...m, quantidade: qtd, total: qtd * m.valorUnitario } : m
+    );
+    setMedicoes(novos);
   };
 
   const totalServicos = medicoes.reduce((sum, m) => sum + m.total, 0);
@@ -87,113 +89,135 @@ export default function MedicaoScreen() {
   const totalGeral = totalServicos + totalIntegracao + totalVTSabado;
 
   return (
-    <div className="p-8">
-      <h2 className="text-3xl font-bold mb-8">Lançamento de Medição</h2>
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <div className="w-72 bg-white border-r shadow-lg flex flex-col">
+        <div className="p-6 border-b">
+          <h1 className="text-2xl font-bold text-blue-600">Engecap Medição</h1>
+          <p className="text-sm text-gray-500">Faena - 325</p>
+        </div>
+        <div className="flex-1 p-4">
+          <nav className="space-y-2">
+            <a href="/" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📊 Dashboard</a>
+            <a href="/cadastro" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📋 Cadastro de Obra</a>
+            <a href="/liberacao" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">🔓 Liberação de Tarefas</a>
+            <a href="/medicao" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 text-blue-600 font-medium">📝 Lançar Medição</a>
+          </nav>
+        </div>
+      </div>
 
-      <div className="bg-white rounded-3xl shadow-xl p-8">
-        {/* Busca por Chapa */}
-        <div className="flex gap-4 mb-8">
-          <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">Chapa do Funcionário</label>
-            <div className="flex gap-3">
+      {/* Conteúdo */}
+      <div className="flex-1 overflow-auto p-8">
+        <h2 className="text-3xl font-bold mb-8">Lançamento de Medição</h2>
+
+        {/* Busca de Funcionário */}
+        <div className="bg-white rounded-2xl shadow p-8 mb-8">
+          <h4 className="font-semibold mb-4">1. Buscar Funcionário pela Chapa</h4>
+          <div className="flex gap-4">
+            <input 
+              type="text" 
+              placeholder="Digite a chapa" 
+              value={chapa} 
+              onChange={(e) => setChapa(e.target.value)}
+              className="border rounded-lg px-4 py-3 w-64"
+            />
+            <button onClick={buscarFuncionario} className="bg-blue-600 text-white px-8 py-3 rounded-lg">Buscar</button>
+          </div>
+          {funcionarioAtual && <p className="mt-4 text-green-600 font-medium">✅ {funcionarioAtual.nome} - {funcionarioAtual.funcao}</p>}
+        </div>
+
+        {/* Serviços Liberados */}
+        <div className="bg-white rounded-2xl shadow p-8 mb-8">
+          <h4 className="font-semibold mb-6">2. Serviços Liberados</h4>
+          
+          {servicosLiberados.length === 0 ? (
+            <p className="text-gray-500 py-12 text-center">Nenhum trecho liberado ainda. Vá na Liberação de Tarefas.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {servicosLiberados.map((item, idx) => (
+                <div key={idx} className="border rounded-xl p-6 hover:shadow">
+                  <p className="font-medium">{item.secao} — {item.andar}</p>
+                  <p className="text-gray-600 text-sm mt-1">{item.trecho || 'Sem descrição'}</p>
+                  <p className="text-blue-600 mt-3">{item.volumeLiberado} m³ liberados</p>
+                  <button 
+                    onClick={() => adicionarMedicao(item)}
+                    className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium"
+                  >
+                    Lançar neste funcionário
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Integração e VT Sábado */}
+        <div className="bg-white rounded-2xl shadow p-8 mb-8">
+          <h4 className="font-semibold mb-6">3. Integração e VT Sábado</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <label className="block text-sm mb-2">Integração (R$ 9,98)</label>
               <input 
-                type="text" 
-                value={chapaInput} 
-                onChange={(e) => setChapaInput(e.target.value)} 
-                placeholder="Ex: 01" 
-                className="flex-1 border border-gray-300 rounded-xl px-5 py-4 text-lg" 
+                type="number" 
+                value={qtIntegracao} 
+                onChange={(e) => setQtIntegracao(Number(e.target.value) || 0)}
+                className="w-full border rounded-lg px-4 py-3"
               />
-              <button onClick={buscarFuncionario} className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-semibold">Buscar</button>
+            </div>
+            <div>
+              <label className="block text-sm mb-2">VT Sábado (R$ 19,98)</label>
+              <input 
+                type="number" 
+                value={qtVTSabado} 
+                onChange={(e) => setQtVTSabado(Number(e.target.value) || 0)}
+                className="w-full border rounded-lg px-4 py-3"
+              />
             </div>
           </div>
         </div>
 
-        {funcionarioAtual && (
-          <div className="bg-green-50 border border-green-200 p-5 rounded-2xl mb-8">
-            ✅ <strong className="text-xl">{funcionarioAtual.nome}</strong> — {funcionarioAtual.funcao}
-          </div>
-        )}
-
-        {/* Serviços Liberados */}
-        <h3 className="font-semibold text-lg mb-4">Serviços Liberados</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          {servicosLiberados.filter(s => s.liberado).length === 0 ? (
-            <p className="col-span-2 text-center py-12 text-gray-500">Nenhum serviço liberado ainda. Vá na Liberação.</p>
-          ) : (
-            servicosLiberados.filter(s => s.liberado).map(s => (
-              <button 
-                key={s.id} 
-                onClick={() => adicionarMedicao(s)}
-                className="border-2 border-gray-200 hover:border-blue-600 p-6 rounded-2xl text-left transition-all hover:shadow-md active:scale-95"
-              >
-                <p className="font-medium text-lg">{s.servico}</p>
-                <p className="text-gray-500">{s.secao} • {s.andar}</p>
-              </button>
-            ))
-          )}
-        </div>
-
-        {/* Tabela de Medições Lançadas */}
+        {/* Medições Lançadas */}
         {medicoes.length > 0 && (
-          <div className="mb-10">
-            <h3 className="font-semibold text-lg mb-4">Medições Lançadas</h3>
-            <table className="w-full border-collapse">
+          <div className="bg-white rounded-2xl shadow p-8">
+            <h4 className="font-semibold mb-6">Medições Lançadas</h4>
+            <table className="w-full">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="p-4 text-left">Funcionário</th>
-                  <th className="p-4 text-left">Serviço</th>
+                  <th className="p-4 text-left">Trecho / Serviço</th>
                   <th className="p-4 text-center">Quantidade</th>
-                  <th className="p-4 text-right">Valor Unit.</th>
-                  <th className="p-4 text-right">Total</th>
+                  <th className="p-4 text-center">Valor Unit.</th>
+                  <th className="p-4 text-center">Total</th>
                 </tr>
               </thead>
               <tbody>
-                {medicoes.map(m => (
-                  <tr key={m.id} className="border-t">
-                    <td className="p-4 font-medium">{m.nome}</td>
-                    <td className="p-4">{m.servico} <span className="text-blue-600">- {m.andar}</span></td>
+                {medicoes.map(item => (
+                  <tr key={item.id} className="border-t">
+                    <td className="p-4">{item.nome}</td>
+                    <td className="p-4">{item.servico}</td>
                     <td className="p-4 text-center">
-                      <input type="number" value={m.quantidade} onChange={(e) => atualizarQuantidade(m.id, Number(e.target.value)||0)} className="w-28 text-center border rounded-xl py-2" />
+                      <input 
+                        type="number" 
+                        value={item.quantidade} 
+                        onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value))}
+                        className="w-24 border rounded text-center"
+                      />
                     </td>
-                    <td className="p-4 text-right">R$ {m.valorUnitario.toFixed(2)}</td>
-                    <td className="p-4 text-right font-bold">R$ {m.total.toFixed(2)}</td>
+                    <td className="p-4 text-center">R$ {item.valorUnitario}</td>
+                    <td className="p-4 text-center font-semibold">R$ {item.total}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
+            <div className="mt-8 text-right text-2xl font-bold">
+              Total Serviços: R$ {totalServicos}<br/>
+              Integração: R$ {totalIntegracao.toFixed(2)}<br/>
+              VT Sábado: R$ {totalVTSabado.toFixed(2)}<br/>
+              <span className="text-green-600">TOTAL GERAL: R$ {totalGeral.toFixed(2)}</span>
+            </div>
           </div>
         )}
-
-        {/* Integração e VT */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 border-t pt-8">
-          <div className="bg-gray-50 p-6 rounded-2xl">
-            <h4 className="font-semibold mb-3">Integração</h4>
-            <div className="flex items-center gap-4">
-              <input type="number" value={qtIntegracao} onChange={(e) => setQtIntegracao(Number(e.target.value)||0)} className="border rounded-xl px-5 py-3 w-32 text-center text-lg" />
-              <span>× R$ 9,98</span>
-            </div>
-            <p className="text-right mt-4 font-bold">R$ {(qtIntegracao * 9.98).toFixed(2)}</p>
-          </div>
-
-          <div className="bg-gray-50 p-6 rounded-2xl">
-            <h4 className="font-semibold mb-3">VT Sábado</h4>
-            <div className="flex items-center gap-4">
-              <input type="number" value={qtVTSabado} onChange={(e) => setQtVTSabado(Number(e.target.value)||0)} className="border rounded-xl px-5 py-3 w-32 text-center text-lg" />
-              <span>× R$ 19,98</span>
-            </div>
-            <p className="text-right mt-4 font-bold">R$ {(qtVTSabado * 19.98).toFixed(2)}</p>
-          </div>
-        </div>
-
-        <div className="mt-12 border-t pt-8 flex justify-between items-end">
-          <div>
-            <p className="text-2xl font-semibold">Total Geral</p>
-            <p className="text-6xl font-bold text-green-600">R$ {totalGeral.toFixed(2)}</p>
-          </div>
-          <button className="bg-green-600 hover:bg-green-700 text-white px-16 py-5 rounded-3xl font-semibold text-xl">
-            Finalizar Medição
-          </button>
-        </div>
       </div>
     </div>
   );
