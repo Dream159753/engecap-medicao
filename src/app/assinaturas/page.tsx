@@ -16,7 +16,7 @@ type MedicaoItem = {
 
 export default function AguardandoAssinatura() {
   const [medicoes, setMedicoes] = useState<MedicaoItem[]>([]);
-  const [assinaturas, setAssinaturas] = useState<Record<number, string>>({});
+  const [assinaturas, setAssinaturas] = useState<Record<string, string>>({}); // chave por chapa
 
   useEffect(() => {
     const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
@@ -25,7 +25,33 @@ export default function AguardandoAssinatura() {
     }
   }, []);
 
-  const totalGeral = medicoes.reduce((sum, m) => sum + m.total, 0);
+  // Agrupa as medições por funcionário (chapa)
+  const medicoesAgrupadas = medicoes.reduce((acc: any, item) => {
+    if (!acc[item.chapa]) {
+      acc[item.chapa] = {
+        chapa: item.chapa,
+        nome: item.nome,
+        funcao: item.funcao,
+        itens: [],
+        total: 0
+      };
+    }
+    acc[item.chapa].itens.push(item);
+    acc[item.chapa].total += item.total;
+    return acc;
+  }, {});
+
+  const totalGeral = Object.values(medicoesAgrupadas).reduce((sum: number, grupo: any) => sum + grupo.total, 0);
+
+  const registrarAssinatura = (chapa: string) => {
+    if (confirm(`Confirmar assinatura de ${medicoesAgrupadas[chapa].nome}?`)) {
+      setAssinaturas(prev => ({
+        ...prev,
+        [chapa]: new Date().toLocaleString('pt-BR')
+      }));
+      alert("✅ Assinatura registrada com sucesso!");
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -60,33 +86,42 @@ export default function AguardandoAssinatura() {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="p-4 text-left">Funcionário</th>
-                  <th className="p-4 text-left">Trecho / Serviço</th>
-                  <th className="p-4 text-center">Quantidade</th>
+                  <th className="p-4 text-left">Trechos</th>
+                  <th className="p-4 text-center">Quantidade Total</th>
                   <th className="p-4 text-center">Valor Total</th>
                   <th className="p-4 text-center">Status</th>
                   <th className="p-4 text-center">Ação</th>
                 </tr>
               </thead>
               <tbody>
-                {medicoes.map((item) => (
-                  <tr key={item.id} className="border-t hover:bg-gray-50">
-                    <td className="p-4 font-medium">{item.nome}</td>
-                    <td className="p-4">{item.servico}</td>
-                    <td className="p-4 text-center">{item.quantidade} m³</td>
-                    <td className="p-4 text-center font-semibold">R$ {item.total}</td>
+                {Object.values(medicoesAgrupadas).map((grupo: any) => (
+                  <tr key={grupo.chapa} className="border-t hover:bg-gray-50">
+                    <td className="p-4 font-medium">
+                      {grupo.nome}<br/>
+                      <span className="text-sm text-gray-500">Chapa: {grupo.chapa}</span>
+                    </td>
+                    <td className="p-4">
+                      {grupo.itens.map((item: any, i: number) => (
+                        <div key={i} className="text-sm">{item.servico}</div>
+                      ))}
+                    </td>
+                    <td className="p-4 text-center font-semibold">
+                      {grupo.itens.reduce((sum: number, item: any) => sum + item.quantidade, 0)} m³
+                    </td>
+                    <td className="p-4 text-center font-semibold">R$ {grupo.total}</td>
                     <td className="p-4 text-center">
-                      {assinaturas[item.id] ? (
+                      {assinaturas[grupo.chapa] ? (
                         <span className="text-green-600 font-medium">✅ Assinado</span>
                       ) : (
                         <span className="text-orange-600">⏳ Aguardando</span>
                       )}
                     </td>
                     <td className="p-4 text-center">
-                      {!assinaturas[item.id] && (
-                        <Link href={`/assinatura?id=${item.id}`}>
+                      {!assinaturas[grupo.chapa] && (
+                        <Link href={`/assinatura?id=${grupo.itens[0].id}`}>
                           <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium">
-                               Assinar Agora
-                         </button>
+                            Assinar Agora
+                          </button>
                         </Link>
                       )}
                     </td>
