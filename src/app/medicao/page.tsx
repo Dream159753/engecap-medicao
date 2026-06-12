@@ -71,7 +71,7 @@ export default function LancamentoMedicao() {
       return;
     }
 
-    const quantidadeSugestao = Math.min(10, item.volumeRestante); // sugere um valor razoável
+    const qtd = Math.min(10, item.volumeRestante); // sugere valor
 
     const novo: MedicaoItem = {
       id: Date.now(),
@@ -79,10 +79,25 @@ export default function LancamentoMedicao() {
       nome: funcionarioAtual.nome,
       funcao: funcionarioAtual.funcao,
       servico: `${item.trecho || 'Serviço'} - ${item.andar}`,
-      quantidade: quantidadeSugestao,
+      quantidade: qtd,
       valorUnitario: 150,
-      total: quantidadeSugestao * 150
+      total: qtd * 150
     };
+
+    // Atualiza o restante no estado
+    const novosServicos = [...servicosLiberados];
+    novosServicos[index].volumeRestante -= qtd;
+    setServicosLiberados(novosServicos);
+
+    // Salva no localStorage
+    const todosServicos = JSON.parse(localStorage.getItem('servicosLiberados') || '[]');
+    const indexGlobal = todosServicos.findIndex((s: any) => 
+      s.secao === item.secao && s.andar === item.andar
+    );
+    if (indexGlobal !== -1) {
+      todosServicos[indexGlobal].volumeRestante = novosServicos[index].volumeRestante;
+      localStorage.setItem('servicosLiberados', JSON.stringify(todosServicos));
+    }
 
     setMedicoes([...medicoes, novo]);
   };
@@ -171,7 +186,6 @@ export default function LancamentoMedicao() {
           )}
         </div>
 
-        {/* Integração e VT */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">3. Integração e VT Sábado</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
