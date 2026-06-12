@@ -21,7 +21,7 @@ type MedicaoItem = {
   quantidade: number;
   valorUnitario: number;
   total: number;
-  servicoIndex: number; // para saber qual serviço abater
+  servicoIndex: number;
 };
 
 export default function LancamentoMedicao() {
@@ -55,8 +55,11 @@ export default function LancamentoMedicao() {
 
   const buscarFuncionario = () => {
     const encontrado = funcionariosDB.find(f => f.chapa === chapa.trim());
-    if (encontrado) setFuncionarioAtual(encontrado);
-    else alert("Funcionário não encontrado!");
+    if (encontrado) {
+      setFuncionarioAtual(encontrado);
+    } else {
+      alert("Funcionário não encontrado!");
+    }
   };
 
   const adicionarMedicao = (item: ServicoLiberado, index: number) => {
@@ -87,32 +90,37 @@ export default function LancamentoMedicao() {
   };
 
   const atualizarQuantidade = (medicaoId: number, novaQtd: number) => {
-    setMedicoes(prevMedicoes => {
-      const novosMedicoes = prevMedicoes.map(m => {
+    setMedicoes(prev => {
+      return prev.map(m => {
         if (m.id === medicaoId) {
-          const diferenca = novaQtd - m.quantidade;
-          const novos = [...servicosLiberados];
-          
-          if (m.servicoIndex !== undefined && novos[m.servicoIndex]) {
-            novos[m.servicoIndex].volumeRestante = Math.max(0, novos[m.servicoIndex].volumeRestante - diferenca);
-            setServicosLiberados(novos);
+          const diferenca = novaQtd - m.quantidade; // quanto mudou
 
-            // Atualiza localStorage
+          // Atualiza o restante do serviço correspondente
+          const novosServicos = [...servicosLiberados];
+          if (m.servicoIndex !== undefined && novosServicos[m.servicoIndex]) {
+            novosServicos[m.servicoIndex].volumeRestante = Math.max(0, novosServicos[m.servicoIndex].volumeRestante - diferenca);
+            setServicosLiberados(novosServicos);
+
+            // Atualiza no localStorage
             const todos = JSON.parse(localStorage.getItem('servicosLiberados') || '[]');
             const globalIndex = todos.findIndex((s: any) => 
-              s.secao === novos[m.servicoIndex].secao && s.andar === novos[m.servicoIndex].andar
+              s.secao === novosServicos[m.servicoIndex].secao && 
+              s.andar === novosServicos[m.servicoIndex].andar
             );
             if (globalIndex !== -1) {
-              todos[globalIndex].volumeRestante = novos[m.servicoIndex].volumeRestante;
+              todos[globalIndex].volumeRestante = novosServicos[m.servicoIndex].volumeRestante;
               localStorage.setItem('servicosLiberados', JSON.stringify(todos));
             }
           }
 
-          return { ...m, quantidade: novaQtd, total: novaQtd * m.valorUnitario };
+          return { 
+            ...m, 
+            quantidade: novaQtd, 
+            total: novaQtd * m.valorUnitario 
+          };
         }
         return m;
       });
-      return novosMedicoes;
     });
   };
 
@@ -139,7 +147,6 @@ export default function LancamentoMedicao() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <div className="w-72 bg-white border-r shadow-lg flex flex-col">
         <div className="p-6 border-b">
           <h1 className="text-2xl font-bold text-blue-600">Engecap Medição</h1>
@@ -159,7 +166,6 @@ export default function LancamentoMedicao() {
       <div className="flex-1 overflow-auto p-8">
         <h2 className="text-3xl font-bold mb-8">Lançamento de Medição</h2>
 
-        {/* Busca Funcionário */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-4">1. Buscar Funcionário</h4>
           <div className="flex gap-4">
@@ -169,7 +175,6 @@ export default function LancamentoMedicao() {
           {funcionarioAtual && <p className="mt-4 text-green-600 font-medium">✅ {funcionarioAtual.nome} - {funcionarioAtual.funcao}</p>}
         </div>
 
-        {/* Trechos Liberados */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">2. Trechos Liberados</h4>
           {servicosLiberados.length === 0 ? (
@@ -196,7 +201,6 @@ export default function LancamentoMedicao() {
           )}
         </div>
 
-        {/* Integração e VT */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">3. Integração e VT Sábado</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -211,7 +215,6 @@ export default function LancamentoMedicao() {
           </div>
         </div>
 
-        {/* Medições Lançadas */}
         {medicoes.length > 0 && (
           <div className="bg-white rounded-2xl shadow p-8">
             <h4 className="font-semibold mb-6">Medições Lançadas</h4>
