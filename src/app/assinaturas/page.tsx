@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 type MedicaoItem = {
   id: number;
@@ -24,16 +25,6 @@ export default function AguardandoAssinatura() {
     }
   }, []);
 
-  const registrarAssinatura = (id: number) => {
-    if (confirm("Confirmar assinatura deste funcionário?")) {
-      setAssinaturas(prev => ({
-        ...prev,
-        [id]: new Date().toLocaleString('pt-BR')
-      }));
-      alert("✅ Assinatura registrada com sucesso!");
-    }
-  };
-
   const totalGeral = medicoes.reduce((sum, m) => sum + m.total, 0);
 
   return (
@@ -55,7 +46,7 @@ export default function AguardandoAssinatura() {
         </div>
       </div>
 
-      {/* Conteúdo Principal */}
+      {/* Conteúdo */}
       <div className="flex-1 overflow-auto p-8">
         <h2 className="text-3xl font-bold mb-8">Medições Aguardando Assinatura</h2>
 
@@ -70,7 +61,7 @@ export default function AguardandoAssinatura() {
                 <tr className="bg-gray-100">
                   <th className="p-4 text-left">Funcionário</th>
                   <th className="p-4 text-left">Trecho / Serviço</th>
-                  <th className="p-4 text-center">Quantidade (m³)</th>
+                  <th className="p-4 text-center">Quantidade</th>
                   <th className="p-4 text-center">Valor Total</th>
                   <th className="p-4 text-center">Status</th>
                   <th className="p-4 text-center">Ação</th>
@@ -92,22 +83,17 @@ export default function AguardandoAssinatura() {
                     </td>
                     <td className="p-4 text-center">
                       {!assinaturas[item.id] && (
-                        <button 
-                          onClick={() => registrarAssinatura(item.id)}
-                          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                        >
-                          Assinar
-                        </button>
+                        <Link href="/assinatura">
+                          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium">
+                            Assinar Agora
+                          </button>
+                        </Link>
                       )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-
-            <div className="mt-8 text-right text-2xl font-bold">
-              Total Geral: R$ {totalGeral}
-            </div>
           </div>
         )}
       </div>
