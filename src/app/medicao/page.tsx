@@ -55,11 +55,8 @@ export default function LancamentoMedicao() {
 
   const buscarFuncionario = () => {
     const encontrado = funcionariosDB.find(f => f.chapa === chapa.trim());
-    if (encontrado) {
-      setFuncionarioAtual(encontrado);
-    } else {
-      alert("Funcionário não encontrado!");
-    }
+    if (encontrado) setFuncionarioAtual(encontrado);
+    else alert("Funcionário não encontrado!");
   };
 
   const adicionarMedicao = (item: ServicoLiberado, index: number) => {
@@ -74,7 +71,7 @@ export default function LancamentoMedicao() {
 
     const qtdInicial = Math.min(10, item.volumeRestante);
 
-    const novo: MedicaoItem = {
+    const novo = {
       id: Date.now(),
       chapa: funcionarioAtual.chapa,
       nome: funcionarioAtual.nome,
@@ -90,15 +87,16 @@ export default function LancamentoMedicao() {
   };
 
   const atualizarQuantidade = (medicaoId: number, novaQtd: number) => {
-    setMedicoes(prev => {
-      return prev.map(m => {
+    setMedicoes(prevMedicoes => {
+      return prevMedicoes.map(m => {
         if (m.id === medicaoId) {
           const diferenca = novaQtd - m.quantidade; // quanto mudou
 
-          // Atualiza o restante do serviço correspondente
           const novosServicos = [...servicosLiberados];
           if (m.servicoIndex !== undefined && novosServicos[m.servicoIndex]) {
+            // Abate a diferença (se aumentar quantidade, diminui restante)
             novosServicos[m.servicoIndex].volumeRestante = Math.max(0, novosServicos[m.servicoIndex].volumeRestante - diferenca);
+            
             setServicosLiberados(novosServicos);
 
             // Atualiza no localStorage
