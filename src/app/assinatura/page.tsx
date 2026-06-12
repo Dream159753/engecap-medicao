@@ -13,7 +13,7 @@ export default function AssinaturaMedicao() {
     if (salvo) {
       const medicoes = JSON.parse(salvo);
       if (medicoes.length > 0) {
-        setMedicaoAtual(medicoes[medicoes.length - 1]); // Pega a última medição
+        setMedicaoAtual(medicoes[medicoes.length - 1]);
       }
     }
   }, []);
@@ -65,8 +65,15 @@ export default function AssinaturaMedicao() {
       return;
     }
 
+    // Remove a medição assinada da lista de aguardando
+    const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
+    if (salvo && medicaoAtual) {
+      let medicoes = JSON.parse(salvo);
+      medicoes = medicoes.filter((m: any) => m.id !== medicaoAtual.id);
+      localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(medicoes));
+    }
+
     alert("✅ Assinatura salva com sucesso!\nMedição finalizada.");
-    // Aqui futuramente vamos remover da lista de aguardando
     window.location.href = "/assinaturas";
   };
 
