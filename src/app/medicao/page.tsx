@@ -69,17 +69,15 @@ export default function LancamentoMedicao() {
       return;
     }
 
-    const qtdInicial = Math.min(10, item.volumeRestante);
-
-    const novo = {
+    const novo: MedicaoItem = {
       id: Date.now(),
       chapa: funcionarioAtual.chapa,
       nome: funcionarioAtual.nome,
       funcao: funcionarioAtual.funcao,
       servico: `${item.trecho || 'Serviço'} - ${item.andar}`,
-      quantidade: qtdInicial,
+      quantidade: 0,           // ← Agora vem zerado
       valorUnitario: 150,
-      total: qtdInicial * 150,
+      total: 0,
       servicoIndex: index
     };
 
@@ -90,16 +88,14 @@ export default function LancamentoMedicao() {
     setMedicoes(prevMedicoes => {
       return prevMedicoes.map(m => {
         if (m.id === medicaoId) {
-          const diferenca = novaQtd - m.quantidade; // quanto mudou
+          const diferenca = novaQtd - m.quantidade;
 
           const novosServicos = [...servicosLiberados];
           if (m.servicoIndex !== undefined && novosServicos[m.servicoIndex]) {
-            // Abate a diferença (se aumentar quantidade, diminui restante)
             novosServicos[m.servicoIndex].volumeRestante = Math.max(0, novosServicos[m.servicoIndex].volumeRestante - diferenca);
             
             setServicosLiberados(novosServicos);
 
-            // Atualiza no localStorage
             const todos = JSON.parse(localStorage.getItem('servicosLiberados') || '[]');
             const globalIndex = todos.findIndex((s: any) => 
               s.secao === novosServicos[m.servicoIndex].secao && 
