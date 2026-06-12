@@ -6,30 +6,48 @@ export default function AssinaturaMedicao() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [assinaturaFeita, setAssinaturaFeita] = useState(false);
-  const [medicoesDoFuncionario, setMedicoesDoFuncionario] = useState<any[]>([]);
+  const [medicaoAtual, setMedicaoAtual] = useState<any>(null);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const chapa = urlParams.get('chapa');
-
     const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
-    if (salvo && chapa) {
-      const todas = JSON.parse(salvo);
-      const doFuncionario = todas.filter((m: any) => m.chapa === chapa);
-      setMedicoesDoFuncionario(doFuncionario);
+    if (salvo) {
+      const medicoes = JSON.parse(salvo);
+      if (medicoes.length > 0) {
+        setMedicaoAtual(medicoes[medicoes.length - 1]);
+      }
     }
   }, []);
 
+  const getCoordinates = (e: any) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    let x, y;
+
+    if (e.touches && e.touches[0]) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
+    return { x, y };
+  };
+
   const startDrawing = (e: any) => {
+    e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const { x, y } = getCoordinates(e);
+
     setIsDrawing(true);
     setAssinaturaFeita(true);
     ctx.beginPath();
-    ctx.moveTo(e.nativeEvent.offsetX || e.touches[0].offsetX, e.nativeEvent.offsetY || e.touches[0].offsetY);
+    ctx.moveTo(x, y);
   };
 
   const draw = (e: any) => {
@@ -39,17 +57,19 @@ export default function AssinaturaMedicao() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const x = e.nativeEvent.offsetX || e.touches[0].offsetX;
-    const y = e.nativeEvent.offsetY || e.touches[0].offsetY;
+    const { x, y } = getCoordinates(e);
 
     ctx.lineTo(x, y);
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 6;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.stroke();
   };
 
-  const stopDrawing = () => setIsDrawing(false);
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
 
   const limparCanvas = () => {
     const canvas = canvasRef.current;
@@ -66,38 +86,30 @@ export default function AssinaturaMedicao() {
     }
 
     const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
-    if (salvo && medicoesDoFuncionario.length > 0) {
-      let todas = JSON.parse(salvo);
-      // Remove todas as medições deste funcionário
-      todas = todas.filter((m: any) => m.chapa !== medicoesDoFuncionario[0].chapa);
-      localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(todas));
+    if (salvo && medicaoAtual) {
+      let medicoes = JSON.parse(salvo);
+      medicoes = medicoes.filter((m: any) => m.id !== medicaoAtual.id);
+      localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(medicoes));
     }
 
-    alert("✅ Assinatura salva com sucesso!");
-window.location.href = "/pagamento";
+    alert("✅ Assinatura salva com sucesso!\nMedição finalizada.");
+    window.location.href = "/assinaturas";
   };
-
-  const totalGeral = medicoesDoFuncionario.reduce((sum, m) => sum + m.total, 0);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-5xl mx-auto">
         <h2 className="text-4xl font-bold text-center mb-8">Assinatura da Medição</h2>
 
-        {medicoesDoFuncionario.length > 0 && (
+        {medicaoAtual && (
           <div className="bg-white rounded-3xl shadow-xl p-8 mb-10">
             <h3 className="font-semibold mb-6 text-center text-2xl border-b pb-4">Resumo da Medição</h3>
             <div className="grid grid-cols-2 gap-y-4 text-lg">
-              <div><strong>Funcionário:</strong> {medicoesDoFuncionario[0].nome}</div>
-              <div><strong>Chapa:</strong> {medicoesDoFuncionario[0].chapa}</div>
-              <div className="col-span-2">
-                <strong>Trechos:</strong><br/>
-                {medicoesDoFuncionario.map((m, i) => (
-                  <div key={i} className="ml-4">• {m.servico} — {m.quantidade} m³</div>
-                ))}
-              </div>
-              <div><strong>Quantidade Total:</strong> <span className="text-blue-600 font-bold">{medicoesDoFuncionario.reduce((sum, m) => sum + m.quantidade, 0)} m³</span></div>
-              <div><strong>Total Geral:</strong> <span className="text-green-600 font-bold">R$ {totalGeral}</span></div>
+              <div><strong>Funcionário:</strong> {medicaoAtual.nome}</div>
+              <div><strong>Chapa:</strong> {medicaoAtual.chapa}</div>
+              <div className="col-span-2"><strong>Trecho / Serviço:</strong> {medicaoAtual.servico}</div>
+              <div><strong>Quantidade:</strong> <span className="text-blue-600 font-bold">{medicaoAtual.quantidade} m³</span></div>
+              <div><strong>Total:</strong> <span className="text-green-600 font-bold">R$ {medicaoAtual.total}</span></div>
             </div>
           </div>
         )}
