@@ -9,7 +9,7 @@ type ServicoLiberado = {
   volumeLiberado: number;
   trecho: string;
   liberado: boolean;
-  volumeRestante: number;   // novo campo
+  volumeRestante: number;
 };
 
 type MedicaoItem = {
@@ -32,18 +32,19 @@ export default function LancamentoMedicao() {
   const [qtIntegracao, setQtIntegracao] = useState(0);
   const [qtVTSabado, setQtVTSabado] = useState(0);
 
+  // Funcionários atualizados
   const funcionariosDB = [
     { chapa: "01", nome: "João da Silva", funcao: "Carpinteiro" },
+    { chapa: "02", nome: "Pedro Paulo", funcao: "Armador" },
+    { chapa: "03", nome: "Antonio de Souza", funcao: "Pedreiro" },
     { chapa: "1001", nome: "João da Silva", funcao: "Carpinteiro" },
     { chapa: "1002", nome: "Maria Oliveira", funcao: "Armador" },
-    { chapa: "1003", nome: "Pedro Santos", funcao: "Pedreiro" },
   ];
 
   useEffect(() => {
     const salvo = localStorage.getItem('servicosLiberados');
     if (salvo) {
       let dados: ServicoLiberado[] = JSON.parse(salvo);
-      // Adiciona campo de restante se não existir
       dados = dados.map(s => ({
         ...s,
         volumeRestante: s.volumeRestante !== undefined ? s.volumeRestante : s.volumeLiberado
@@ -57,13 +58,14 @@ export default function LancamentoMedicao() {
     if (encontrado) {
       setFuncionarioAtual(encontrado);
     } else {
-      alert("Funcionário não encontrado!");
+      alert("Funcionário não encontrado com esta chapa!");
+      setFuncionarioAtual(null);
     }
   };
 
-  const adicionarMedicao = (liberado: ServicoLiberado, index: number) => {
+  const adicionarMedicao = (liberado: ServicoLiberado) => {
     if (!funcionarioAtual) {
-      alert("Busque um funcionário primeiro!");
+      alert("Busque um funcionário pela chapa primeiro!");
       return;
     }
     if (liberado.volumeRestante <= 0) {
@@ -98,11 +100,14 @@ export default function LancamentoMedicao() {
       return;
     }
 
-    // Aqui você pode salvar no localStorage futuramente
-    localStorage.setItem('medicoesRealizadas', JSON.stringify(medicoes));
+    const medicoesSalvas = JSON.parse(localStorage.getItem('medicoesAguardandoAssinatura') || '[]');
+    localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify([...medicoesSalvas, ...medicoes]));
+
+    alert(`✅ ${medicoes.length} medição(ões) salva(s) com sucesso para assinatura!`);
     
-    alert("✅ Medição finalizada com sucesso!\n\nAgora podemos ir para a tela de assinatura.");
-    // Aqui futuramente vamos redirecionar pra tela de assinatura
+    setMedicoes([]);
+    setChapa("");
+    setFuncionarioAtual(null);
   };
 
   const totalServicos = medicoes.reduce((sum, m) => sum + m.total, 0);
@@ -121,43 +126,49 @@ export default function LancamentoMedicao() {
         <div className="flex-1 p-4">
           <nav className="space-y-2">
             <a href="/" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📊 Dashboard</a>
-            <a href="/cadastro" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📋 Cadastro</a>
-            <a href="/liberacao" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">🔓 Liberação</a>
+            <a href="/cadastro" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📋 Cadastro de Obra</a>
+            <a href="/liberacao" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">🔓 Liberação de Tarefas</a>
             <a href="/medicao" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 text-blue-600 font-medium">📝 Lançar Medição</a>
+            <a href="/assinaturas" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">✍️ Aguardando Assinatura</a>
           </nav>
         </div>
       </div>
 
+      {/* Conteúdo Principal */}
       <div className="flex-1 overflow-auto p-8">
         <h2 className="text-3xl font-bold mb-8">Lançamento de Medição</h2>
 
-        {/* Busca Funcionário */}
+        {/* 1. Buscar Funcionário */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
-          <h4 className="font-semibold mb-4">1. Buscar Funcionário</h4>
+          <h4 className="font-semibold mb-4">1. Buscar Funcionário pela Chapa</h4>
           <div className="flex gap-4">
-            <input type="text" placeholder="Chapa (ex: 01)" value={chapa} onChange={(e) => setChapa(e.target.value)} className="border rounded-lg px-4 py-3 w-64" />
+            <input 
+              type="text" 
+              placeholder="Chapa (01, 02, 03...)" 
+              value={chapa} 
+              onChange={(e) => setChapa(e.target.value)}
+              className="border rounded-lg px-4 py-3 w-64"
+            />
             <button onClick={buscarFuncionario} className="bg-blue-600 text-white px-8 py-3 rounded-lg">Buscar</button>
           </div>
           {funcionarioAtual && <p className="mt-4 text-green-600 font-medium">✅ {funcionarioAtual.nome} - {funcionarioAtual.funcao}</p>}
         </div>
 
-        {/* Serviços Liberados com Saldo */}
+        {/* 2. Serviços Liberados */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
-          <h4 className="font-semibold mb-6">2. Trechos Liberados (com saldo restante)</h4>
-          
+          <h4 className="font-semibold mb-6">2. Trechos Liberados</h4>
           {servicosLiberados.length === 0 ? (
-            <p className="text-gray-500 py-12 text-center">Nenhum trecho liberado.</p>
+            <p className="text-gray-500 py-12 text-center">Nenhum trecho liberado ainda.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {servicosLiberados.map((item, idx) => (
                 <div key={idx} className="border rounded-xl p-6 hover:shadow">
                   <p className="font-medium">{item.secao} — {item.andar}</p>
-                  <p className="text-gray-600 text-sm">{item.trecho || 'Sem descrição'}</p>
+                  <p className="text-gray-600 text-sm mt-1">{item.trecho || 'Sem descrição'}</p>
                   <p className="text-blue-600 mt-2">Liberado: <strong>{item.volumeLiberado} m³</strong></p>
                   <p className="text-orange-600">Restante: <strong>{item.volumeRestante} m³</strong></p>
-                  
                   <button 
-                    onClick={() => adicionarMedicao(item, idx)}
+                    onClick={() => adicionarMedicao(item)}
                     disabled={item.volumeRestante <= 0}
                     className="mt-4 w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-lg font-medium"
                   >
@@ -169,17 +180,17 @@ export default function LancamentoMedicao() {
           )}
         </div>
 
-        {/* Integração e VT */}
+        {/* 3. Integração e VT Sábado */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">3. Integração e VT Sábado</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <label>Integração (R$ 9,98)</label>
-              <input type="number" value={qtIntegracao} onChange={(e) => setQtIntegracao(Number(e.target.value)||0)} className="w-full border rounded-lg px-4 py-3 mt-1" />
+              <label className="block text-sm mb-2">Integração (R$ 9,98)</label>
+              <input type="number" value={qtIntegracao} onChange={(e) => setQtIntegracao(Number(e.target.value)||0)} className="w-full border rounded-lg px-4 py-3" />
             </div>
             <div>
-              <label>VT Sábado (R$ 19,98)</label>
-              <input type="number" value={qtVTSabado} onChange={(e) => setQtVTSabado(Number(e.target.value)||0)} className="w-full border rounded-lg px-4 py-3 mt-1" />
+              <label className="block text-sm mb-2">VT Sábado (R$ 19,98)</label>
+              <input type="number" value={qtVTSabado} onChange={(e) => setQtVTSabado(Number(e.target.value)||0)} className="w-full border rounded-lg px-4 py-3" />
             </div>
           </div>
         </div>
@@ -188,11 +199,11 @@ export default function LancamentoMedicao() {
         {medicoes.length > 0 && (
           <div className="bg-white rounded-2xl shadow p-8">
             <h4 className="font-semibold mb-6">Medições Lançadas</h4>
-            <table className="w-full">
+            <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="p-4 text-left">Funcionário</th>
-                  <th className="p-4 text-left">Trecho</th>
+                  <th className="p-4 text-left">Trecho / Serviço</th>
                   <th className="p-4 text-center">Quantidade (m³)</th>
                   <th className="p-4 text-center">Valor Unit.</th>
                   <th className="p-4 text-center">Total</th>
@@ -204,7 +215,12 @@ export default function LancamentoMedicao() {
                     <td className="p-4">{item.nome}</td>
                     <td className="p-4">{item.servico}</td>
                     <td className="p-4 text-center">
-                      <input type="number" value={item.quantidade} onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value)||0)} className="w-24 border rounded text-center" />
+                      <input 
+                        type="number" 
+                        value={item.quantidade} 
+                        onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value)||0)} 
+                        className="w-24 border rounded text-center py-1"
+                      />
                     </td>
                     <td className="p-4 text-center">R$ {item.valorUnitario}</td>
                     <td className="p-4 text-center font-semibold">R$ {item.total}</td>
@@ -225,7 +241,7 @@ export default function LancamentoMedicao() {
                 onClick={finalizarMedicao}
                 className="bg-green-600 text-white px-12 py-4 rounded-2xl font-semibold text-lg hover:bg-green-700"
               >
-                Finalizar Medição
+                Finalizar Medição e Enviar para Assinatura
               </button>
             </div>
           </div>
