@@ -9,6 +9,7 @@ type ServicoLiberado = {
   volumeLiberado: number;
   trecho: string;
   liberado: boolean;
+  volumeRestante: number;   // novo campo
 };
 
 type MedicaoItem = {
@@ -31,7 +32,6 @@ export default function LancamentoMedicao() {
   const [qtIntegracao, setQtIntegracao] = useState(0);
   const [qtVTSabado, setQtVTSabado] = useState(0);
 
-  // Funcionários para teste (incluindo o 01 que você pediu)
   const funcionariosDB = [
     { chapa: "01", nome: "João da Silva", funcao: "Carpinteiro" },
     { chapa: "1001", nome: "João da Silva", funcao: "Carpinteiro" },
@@ -42,9 +42,13 @@ export default function LancamentoMedicao() {
   useEffect(() => {
     const salvo = localStorage.getItem('servicosLiberados');
     if (salvo) {
-      const dados: ServicoLiberado[] = JSON.parse(salvo);
-      const apenasLiberados = dados.filter(s => s.liberado === true);
-      setServicosLiberados(apenasLiberados);
+      let dados: ServicoLiberado[] = JSON.parse(salvo);
+      // Adiciona campo de restante se não existir
+      dados = dados.map(s => ({
+        ...s,
+        volumeRestante: s.volumeRestante !== undefined ? s.volumeRestante : s.volumeLiberado
+      }));
+      setServicosLiberados(dados.filter(s => s.liberado === true));
     }
   }, []);
 
@@ -52,16 +56,18 @@ export default function LancamentoMedicao() {
     const encontrado = funcionariosDB.find(f => f.chapa === chapa.trim());
     if (encontrado) {
       setFuncionarioAtual(encontrado);
-      alert(`✅ Encontrado: ${encontrado.nome} - ${encontrado.funcao}`);
     } else {
-      alert("Funcionário não encontrado com esta chapa!");
-      setFuncionarioAtual(null);
+      alert("Funcionário não encontrado!");
     }
   };
 
-  const adicionarMedicao = (liberado: ServicoLiberado) => {
+  const adicionarMedicao = (liberado: ServicoLiberado, index: number) => {
     if (!funcionarioAtual) {
-      alert("Busque um funcionário pela chapa primeiro!");
+      alert("Busque um funcionário primeiro!");
+      return;
+    }
+    if (liberado.volumeRestante <= 0) {
+      alert("Não há mais volume disponível para este trecho!");
       return;
     }
 
@@ -71,9 +77,9 @@ export default function LancamentoMedicao() {
       nome: funcionarioAtual.nome,
       funcao: funcionarioAtual.funcao,
       servico: `${liberado.trecho || 'Serviço'} - ${liberado.andar}`,
-      quantidade: liberado.volumeLiberado,
+      quantidade: 0,
       valorUnitario: 150,
-      total: liberado.volumeLiberado * 150
+      total: 0
     };
 
     setMedicoes([...medicoes, novo]);
@@ -84,6 +90,19 @@ export default function LancamentoMedicao() {
       m.id === id ? { ...m, quantidade: qtd, total: qtd * m.valorUnitario } : m
     );
     setMedicoes(novos);
+  };
+
+  const finalizarMedicao = () => {
+    if (medicoes.length === 0) {
+      alert("Nenhuma medição lançada ainda!");
+      return;
+    }
+
+    // Aqui você pode salvar no localStorage futuramente
+    localStorage.setItem('medicoesRealizadas', JSON.stringify(medicoes));
+    
+    alert("✅ Medição finalizada com sucesso!\n\nAgora podemos ir para a tela de assinatura.");
+    // Aqui futuramente vamos redirecionar pra tela de assinatura
   };
 
   const totalServicos = medicoes.reduce((sum, m) => sum + m.total, 0);
@@ -102,49 +121,45 @@ export default function LancamentoMedicao() {
         <div className="flex-1 p-4">
           <nav className="space-y-2">
             <a href="/" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📊 Dashboard</a>
-            <a href="/cadastro" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📋 Cadastro de Obra</a>
-            <a href="/liberacao" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">🔓 Liberação de Tarefas</a>
+            <a href="/cadastro" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📋 Cadastro</a>
+            <a href="/liberacao" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">🔓 Liberação</a>
             <a href="/medicao" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 text-blue-600 font-medium">📝 Lançar Medição</a>
           </nav>
         </div>
       </div>
 
-      {/* Conteúdo Principal */}
       <div className="flex-1 overflow-auto p-8">
         <h2 className="text-3xl font-bold mb-8">Lançamento de Medição</h2>
 
         {/* Busca Funcionário */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
-          <h4 className="font-semibold mb-4">1. Buscar Funcionário pela Chapa</h4>
+          <h4 className="font-semibold mb-4">1. Buscar Funcionário</h4>
           <div className="flex gap-4">
-            <input 
-              type="text" 
-              placeholder="Digite a chapa (ex: 01)" 
-              value={chapa} 
-              onChange={(e) => setChapa(e.target.value)}
-              className="border rounded-lg px-4 py-3 w-64"
-            />
+            <input type="text" placeholder="Chapa (ex: 01)" value={chapa} onChange={(e) => setChapa(e.target.value)} className="border rounded-lg px-4 py-3 w-64" />
             <button onClick={buscarFuncionario} className="bg-blue-600 text-white px-8 py-3 rounded-lg">Buscar</button>
           </div>
           {funcionarioAtual && <p className="mt-4 text-green-600 font-medium">✅ {funcionarioAtual.nome} - {funcionarioAtual.funcao}</p>}
         </div>
 
-        {/* Serviços Liberados */}
+        {/* Serviços Liberados com Saldo */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
-          <h4 className="font-semibold mb-6">2. Serviços / Trechos Liberados</h4>
+          <h4 className="font-semibold mb-6">2. Trechos Liberados (com saldo restante)</h4>
           
           {servicosLiberados.length === 0 ? (
-            <p className="text-gray-500 py-12 text-center">Nenhum trecho liberado ainda.</p>
+            <p className="text-gray-500 py-12 text-center">Nenhum trecho liberado.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {servicosLiberados.map((item, idx) => (
                 <div key={idx} className="border rounded-xl p-6 hover:shadow">
                   <p className="font-medium">{item.secao} — {item.andar}</p>
-                  <p className="text-gray-600 text-sm mt-1">{item.trecho || 'Sem descrição'}</p>
-                  <p className="text-blue-600 mt-3 font-semibold">{item.volumeLiberado} m³ liberados</p>
+                  <p className="text-gray-600 text-sm">{item.trecho || 'Sem descrição'}</p>
+                  <p className="text-blue-600 mt-2">Liberado: <strong>{item.volumeLiberado} m³</strong></p>
+                  <p className="text-orange-600">Restante: <strong>{item.volumeRestante} m³</strong></p>
+                  
                   <button 
-                    onClick={() => adicionarMedicao(item)}
-                    className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium"
+                    onClick={() => adicionarMedicao(item, idx)}
+                    disabled={item.volumeRestante <= 0}
+                    className="mt-4 w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-lg font-medium"
                   >
                     Lançar Medição
                   </button>
@@ -154,30 +169,30 @@ export default function LancamentoMedicao() {
           )}
         </div>
 
-        {/* Integração + VT Sábado */}
+        {/* Integração e VT */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">3. Integração e VT Sábado</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <label className="block text-sm mb-2">Integração (R$ 9,98 por unidade)</label>
-              <input type="number" value={qtIntegracao} onChange={(e) => setQtIntegracao(Number(e.target.value) || 0)} className="w-full border rounded-lg px-4 py-3" />
+              <label>Integração (R$ 9,98)</label>
+              <input type="number" value={qtIntegracao} onChange={(e) => setQtIntegracao(Number(e.target.value)||0)} className="w-full border rounded-lg px-4 py-3 mt-1" />
             </div>
             <div>
-              <label className="block text-sm mb-2">VT Sábado (R$ 19,98 por unidade)</label>
-              <input type="number" value={qtVTSabado} onChange={(e) => setQtVTSabado(Number(e.target.value) || 0)} className="w-full border rounded-lg px-4 py-3" />
+              <label>VT Sábado (R$ 19,98)</label>
+              <input type="number" value={qtVTSabado} onChange={(e) => setQtVTSabado(Number(e.target.value)||0)} className="w-full border rounded-lg px-4 py-3 mt-1" />
             </div>
           </div>
         </div>
 
-        {/* Medições Lançadas + Totais */}
+        {/* Medições Lançadas */}
         {medicoes.length > 0 && (
           <div className="bg-white rounded-2xl shadow p-8">
             <h4 className="font-semibold mb-6">Medições Lançadas</h4>
-            <table className="w-full border-collapse">
+            <table className="w-full">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="p-4 text-left">Funcionário</th>
-                  <th className="p-4 text-left">Trecho / Serviço</th>
+                  <th className="p-4 text-left">Trecho</th>
                   <th className="p-4 text-center">Quantidade (m³)</th>
                   <th className="p-4 text-center">Valor Unit.</th>
                   <th className="p-4 text-center">Total</th>
@@ -189,7 +204,7 @@ export default function LancamentoMedicao() {
                     <td className="p-4">{item.nome}</td>
                     <td className="p-4">{item.servico}</td>
                     <td className="p-4 text-center">
-                      <input type="number" value={item.quantidade} onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value) || 0)} className="w-24 border rounded text-center py-1" />
+                      <input type="number" value={item.quantidade} onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value)||0)} className="w-24 border rounded text-center" />
                     </td>
                     <td className="p-4 text-center">R$ {item.valorUnitario}</td>
                     <td className="p-4 text-center font-semibold">R$ {item.total}</td>
@@ -198,13 +213,20 @@ export default function LancamentoMedicao() {
               </tbody>
             </table>
 
-            <div className="mt-8 p-6 bg-gray-50 rounded-xl text-right text-xl">
-              <div>Total dos Serviços: <strong>R$ {totalServicos}</strong></div>
-              <div>Integração: <strong>R$ {totalIntegracao.toFixed(2)}</strong></div>
-              <div>VT Sábado: <strong>R$ {totalVTSabado.toFixed(2)}</strong></div>
-              <div className="text-2xl text-green-600 font-bold mt-4">
-                TOTAL GERAL: R$ {totalGeral.toFixed(2)}
-              </div>
+            <div className="mt-8 text-right text-xl font-bold bg-gray-50 p-6 rounded-xl">
+              Total Serviços: R$ {totalServicos}<br/>
+              Integração: R$ {totalIntegracao.toFixed(2)}<br/>
+              VT Sábado: R$ {totalVTSabado.toFixed(2)}<br/>
+              <span className="text-3xl text-green-600">TOTAL GERAL: R$ {totalGeral.toFixed(2)}</span>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <button 
+                onClick={finalizarMedicao}
+                className="bg-green-600 text-white px-12 py-4 rounded-2xl font-semibold text-lg hover:bg-green-700"
+              >
+                Finalizar Medição
+              </button>
             </div>
           </div>
         )}
