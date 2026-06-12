@@ -9,16 +9,11 @@ export default function AssinaturaMedicao() {
   const [medicaoAtual, setMedicaoAtual] = useState<any>(null);
 
   useEffect(() => {
-    // Pega o ID da medição pela URL (vamos passar ele depois)
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('id');
-
     const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
-    if (salvo && id) {
+    if (salvo) {
       const medicoes = JSON.parse(salvo);
-      const encontrada = medicoes.find((m: any) => m.id === parseInt(id));
-      if (encontrada) {
-        setMedicaoAtual(encontrada);
+      if (medicoes.length > 0) {
+        setMedicaoAtual(medicoes[medicoes.length - 1]);
       }
     }
   }, []);
@@ -46,15 +41,12 @@ export default function AssinaturaMedicao() {
 
     ctx.lineTo(x, y);
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 5;
     ctx.lineCap = "round";
     ctx.stroke();
   };
 
-  const stopDrawing = () => {
-    setIsDrawing(false);
-    setAssinaturaFeita(true);
-  };
+  const stopDrawing = () => setIsDrawing(false);
 
   const limparCanvas = () => {
     const canvas = canvasRef.current;
@@ -77,54 +69,72 @@ export default function AssinaturaMedicao() {
       localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(medicoes));
     }
 
-    alert("✅ Assinatura salva com sucesso!");
+    alert("✅ Assinatura salva com sucesso!\nMedição finalizada.");
     window.location.href = "/assinaturas";
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-8">Assinatura da Medição</h2>
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold text-gray-800">Assinatura da Medição</h2>
+          <p className="text-gray-600 mt-2">Confirme os dados e assine abaixo</p>
+        </div>
 
         {medicaoAtual && (
-          <div className="bg-white rounded-2xl shadow p-8 mb-8">
-            <h3 className="font-semibold mb-4">Resumo da Medição</h3>
-            <p><strong>Funcionário:</strong> {medicaoAtual.nome}</p>
-            <p><strong>Trecho:</strong> {medicaoAtual.servico}</p>
-            <p><strong>Quantidade:</strong> {medicaoAtual.quantidade} m³</p>
-            <p><strong>Total:</strong> R$ {medicaoAtual.total}</p>
+          <div className="bg-white rounded-3xl shadow-xl p-8 mb-10">
+            <h3 className="text-2xl font-semibold mb-6 text-center border-b pb-4">Resumo da Medição</h3>
+            <div className="grid grid-cols-2 gap-6 text-lg">
+              <div>
+                <strong>Funcionário:</strong> {medicaoAtual.nome}
+              </div>
+              <div>
+                <strong>Chapa:</strong> {medicaoAtual.chapa}
+              </div>
+              <div className="col-span-2">
+                <strong>Trecho / Serviço:</strong> {medicaoAtual.servico}
+              </div>
+              <div>
+                <strong>Quantidade:</strong> <span className="text-blue-600 font-bold">{medicaoAtual.quantidade} m³</span>
+              </div>
+              <div>
+                <strong>Total:</strong> <span className="text-green-600 font-bold">R$ {medicaoAtual.total}</span>
+              </div>
+            </div>
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow p-8">
-          <p className="text-center mb-6 text-lg font-medium">Assine abaixo com o dedo (tablet/celular):</p>
+        <div className="bg-white rounded-3xl shadow-xl p-8">
+          <p className="text-center text-xl font-medium mb-6">Assine abaixo com o dedo ou stylus:</p>
 
-          <canvas
-            ref={canvasRef}
-            width={800}
-            height={400}
-            className="border-2 border-gray-400 rounded-xl mx-auto block bg-white cursor-crosshair touch-action-none"
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
-          />
+          <div className="border-4 border-gray-300 rounded-2xl overflow-hidden bg-white">
+            <canvas
+              ref={canvasRef}
+              width={900}
+              height={450}
+              className="mx-auto block cursor-crosshair touch-action-none"
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+            />
+          </div>
 
-          <div className="flex justify-center gap-4 mt-8">
+          <div className="flex justify-center gap-6 mt-10">
             <button 
               onClick={limparCanvas}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg"
+              className="bg-gray-600 hover:bg-gray-700 text-white px-10 py-4 rounded-2xl font-semibold text-lg transition"
             >
               Limpar Assinatura
             </button>
             <button 
               onClick={salvarAssinatura}
-              className="bg-green-600 hover:bg-green-700 text-white px-10 py-3 rounded-lg font-semibold"
+              className="bg-green-600 hover:bg-green-700 text-white px-12 py-4 rounded-2xl font-semibold text-lg transition"
             >
-              Confirmar e Salvar Assinatura
+              ✅ Confirmar e Salvar Assinatura
             </button>
           </div>
         </div>
