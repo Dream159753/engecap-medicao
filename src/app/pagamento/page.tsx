@@ -15,7 +15,6 @@ type MedicaoItem = {
 
 export default function LiberarPagamento() {
   const [medicoes, setMedicoes] = useState<MedicaoItem[]>([]);
-  const [liberados, setLiberados] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
@@ -43,21 +42,17 @@ export default function LiberarPagamento() {
   const totalGeral = Object.values(grupos).reduce((sum: number, g: any) => sum + g.total, 0);
 
   const liberarParaDP = (chapa: string) => {
-    if (confirm(`Liberar todas as medições de ${grupos[chapa].nome} para o DP?`)) {
-      setLiberados(prev => ({ ...prev, [chapa]: true }));
-      
-      // Remove do aguardando
-      const salvo = JSON.parse(localStorage.getItem('medicoesAguardandoAssinatura') || '[]');
-      const restantes = salvo.filter((m: any) => m.chapa !== chapa);
+    if (confirm(`Liberar todas as medições de ${grupos[chapa].nome} para pagamento?`)) {
+      const restantes = medicoes.filter(m => m.chapa !== chapa);
       localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(restantes));
-
-      alert(`✅ Medições de ${grupos[chapa].nome} liberadas para pagamento!`);
+      
+      setMedicoes(restantes);
+      alert(`✅ Medições de ${grupos[chapa].nome} liberadas para o DP!`);
     }
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <div className="w-72 bg-white border-r shadow-lg flex flex-col">
         <div className="p-6 border-b">
           <h1 className="text-2xl font-bold text-blue-600">Engecap Medição</h1>
@@ -75,13 +70,12 @@ export default function LiberarPagamento() {
         </div>
       </div>
 
-      {/* Conteúdo */}
       <div className="flex-1 overflow-auto p-8">
         <h2 className="text-3xl font-bold mb-8">Liberar para Pagamento</h2>
 
         {Object.keys(grupos).length === 0 ? (
           <div className="bg-white rounded-2xl shadow p-20 text-center">
-            <p className="text-xl text-gray-500">Nenhuma medição assinada para liberar.</p>
+            <p className="text-xl text-gray-500">Nenhuma medição assinada pronta para pagamento.</p>
           </div>
         ) : (
           <div className="space-y-8">
@@ -107,8 +101,8 @@ export default function LiberarPagamento() {
                     </tr>
                   </thead>
                   <tbody>
-                    {grupo.itens.map((item: any) => (
-                      <tr key={item.id} className="border-t">
+                    {grupo.itens.map((item: any, i: number) => (
+                      <tr key={i} className="border-t">
                         <td className="p-4">{item.servico}</td>
                         <td className="p-4 text-center">{item.quantidade} m³</td>
                         <td className="p-4 text-center font-semibold">R$ {item.total}</td>
@@ -127,10 +121,6 @@ export default function LiberarPagamento() {
                 </div>
               </div>
             ))}
-
-            <div className="text-right text-2xl font-bold text-green-600">
-              Total Geral a Pagar: R$ {totalGeral}
-            </div>
           </div>
         )}
       </div>
