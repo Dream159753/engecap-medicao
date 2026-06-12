@@ -32,7 +32,6 @@ export default function LancamentoMedicao() {
   const [qtIntegracao, setQtIntegracao] = useState(0);
   const [qtVTSabado, setQtVTSabado] = useState(0);
 
-  // Funcionários atualizados
   const funcionariosDB = [
     { chapa: "01", nome: "João da Silva", funcao: "Carpinteiro" },
     { chapa: "02", nome: "Pedro Paulo", funcao: "Armador" },
@@ -58,18 +57,17 @@ export default function LancamentoMedicao() {
     if (encontrado) {
       setFuncionarioAtual(encontrado);
     } else {
-      alert("Funcionário não encontrado com esta chapa!");
-      setFuncionarioAtual(null);
+      alert("Funcionário não encontrado!");
     }
   };
 
-  const adicionarMedicao = (liberado: ServicoLiberado) => {
+  const adicionarMedicao = (liberado: ServicoLiberado, index: number) => {
     if (!funcionarioAtual) {
-      alert("Busque um funcionário pela chapa primeiro!");
+      alert("Busque um funcionário primeiro!");
       return;
     }
     if (liberado.volumeRestante <= 0) {
-      alert("Não há mais volume disponível para este trecho!");
+      alert("Não há mais volume disponível!");
       return;
     }
 
@@ -87,24 +85,24 @@ export default function LancamentoMedicao() {
     setMedicoes([...medicoes, novo]);
   };
 
-  const atualizarQuantidade = (id: number, qtd: number) => {
-    const novos = medicoes.map(m => 
-      m.id === id ? { ...m, quantidade: qtd, total: qtd * m.valorUnitario } : m
+  const atualizarQuantidade = (medicaoId: number, qtd: number) => {
+    const novosMedicoes = medicoes.map(m => 
+      m.id === medicaoId ? { ...m, quantidade: qtd, total: qtd * m.valorUnitario } : m
     );
-    setMedicoes(novos);
+    setMedicoes(novosMedicoes);
   };
 
   const finalizarMedicao = () => {
     if (medicoes.length === 0) {
-      alert("Nenhuma medição lançada ainda!");
+      alert("Nenhuma medição lançada!");
       return;
     }
 
     const medicoesSalvas = JSON.parse(localStorage.getItem('medicoesAguardandoAssinatura') || '[]');
     localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify([...medicoesSalvas, ...medicoes]));
 
-    alert(`✅ ${medicoes.length} medição(ões) salva(s) com sucesso para assinatura!`);
-    
+    alert(`✅ ${medicoes.length} medição(ões) salva(s) para assinatura!`);
+
     setMedicoes([]);
     setChapa("");
     setFuncionarioAtual(null);
@@ -117,7 +115,6 @@ export default function LancamentoMedicao() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <div className="w-72 bg-white border-r shadow-lg flex flex-col">
         <div className="p-6 border-b">
           <h1 className="text-2xl font-bold text-blue-600">Engecap Medição</h1>
@@ -126,35 +123,26 @@ export default function LancamentoMedicao() {
         <div className="flex-1 p-4">
           <nav className="space-y-2">
             <a href="/" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📊 Dashboard</a>
-            <a href="/cadastro" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📋 Cadastro de Obra</a>
-            <a href="/liberacao" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">🔓 Liberação de Tarefas</a>
+            <a href="/cadastro" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">📋 Cadastro</a>
+            <a href="/liberacao" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">🔓 Liberação</a>
             <a href="/medicao" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 text-blue-600 font-medium">📝 Lançar Medição</a>
             <a href="/assinaturas" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100">✍️ Aguardando Assinatura</a>
           </nav>
         </div>
       </div>
 
-      {/* Conteúdo Principal */}
       <div className="flex-1 overflow-auto p-8">
         <h2 className="text-3xl font-bold mb-8">Lançamento de Medição</h2>
 
-        {/* 1. Buscar Funcionário */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
-          <h4 className="font-semibold mb-4">1. Buscar Funcionário pela Chapa</h4>
+          <h4 className="font-semibold mb-4">1. Buscar Funcionário</h4>
           <div className="flex gap-4">
-            <input 
-              type="text" 
-              placeholder="Chapa (01, 02, 03...)" 
-              value={chapa} 
-              onChange={(e) => setChapa(e.target.value)}
-              className="border rounded-lg px-4 py-3 w-64"
-            />
+            <input type="text" placeholder="Chapa (01, 02, 03...)" value={chapa} onChange={(e) => setChapa(e.target.value)} className="border rounded-lg px-4 py-3 w-64" />
             <button onClick={buscarFuncionario} className="bg-blue-600 text-white px-8 py-3 rounded-lg">Buscar</button>
           </div>
           {funcionarioAtual && <p className="mt-4 text-green-600 font-medium">✅ {funcionarioAtual.nome} - {funcionarioAtual.funcao}</p>}
         </div>
 
-        {/* 2. Serviços Liberados */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">2. Trechos Liberados</h4>
           {servicosLiberados.length === 0 ? (
@@ -167,6 +155,7 @@ export default function LancamentoMedicao() {
                   <p className="text-gray-600 text-sm mt-1">{item.trecho || 'Sem descrição'}</p>
                   <p className="text-blue-600 mt-2">Liberado: <strong>{item.volumeLiberado} m³</strong></p>
                   <p className="text-orange-600">Restante: <strong>{item.volumeRestante} m³</strong></p>
+                  
                   <button 
                     onClick={() => adicionarMedicao(item)}
                     disabled={item.volumeRestante <= 0}
@@ -180,7 +169,7 @@ export default function LancamentoMedicao() {
           )}
         </div>
 
-        {/* 3. Integração e VT Sábado */}
+        {/* Integração e VT */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">3. Integração e VT Sábado</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -203,7 +192,7 @@ export default function LancamentoMedicao() {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="p-4 text-left">Funcionário</th>
-                  <th className="p-4 text-left">Trecho / Serviço</th>
+                  <th className="p-4 text-left">Trecho</th>
                   <th className="p-4 text-center">Quantidade (m³)</th>
                   <th className="p-4 text-center">Valor Unit.</th>
                   <th className="p-4 text-center">Total</th>
@@ -237,10 +226,7 @@ export default function LancamentoMedicao() {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <button 
-                onClick={finalizarMedicao}
-                className="bg-green-600 text-white px-12 py-4 rounded-2xl font-semibold text-lg hover:bg-green-700"
-              >
+              <button onClick={finalizarMedicao} className="bg-green-600 text-white px-12 py-4 rounded-2xl font-semibold text-lg hover:bg-green-700">
                 Finalizar Medição e Enviar para Assinatura
               </button>
             </div>
