@@ -21,6 +21,7 @@ type MedicaoItem = {
   quantidade: number;
   valorUnitario: number;
   total: number;
+  servicoIndex: number; // para saber qual serviço abater
 };
 
 export default function LancamentoMedicao() {
@@ -54,11 +55,8 @@ export default function LancamentoMedicao() {
 
   const buscarFuncionario = () => {
     const encontrado = funcionariosDB.find(f => f.chapa === chapa.trim());
-    if (encontrado) {
-      setFuncionarioAtual(encontrado);
-    } else {
-      alert("Funcionário não encontrado!");
-    }
+    if (encontrado) setFuncionarioAtual(encontrado);
+    else alert("Funcionário não encontrado!");
   };
 
   const adicionarMedicao = (item: ServicoLiberado, index: number) => {
@@ -71,7 +69,7 @@ export default function LancamentoMedicao() {
       return;
     }
 
-    const qtd = Math.min(10, item.volumeRestante); // sugere valor
+    const qtdInicial = Math.min(10, item.volumeRestante);
 
     const novo: MedicaoItem = {
       id: Date.now(),
@@ -79,34 +77,43 @@ export default function LancamentoMedicao() {
       nome: funcionarioAtual.nome,
       funcao: funcionarioAtual.funcao,
       servico: `${item.trecho || 'Serviço'} - ${item.andar}`,
-      quantidade: qtd,
+      quantidade: qtdInicial,
       valorUnitario: 150,
-      total: qtd * 150
+      total: qtdInicial * 150,
+      servicoIndex: index
     };
-
-    // Atualiza o restante no estado
-    const novosServicos = [...servicosLiberados];
-    novosServicos[index].volumeRestante -= qtd;
-    setServicosLiberados(novosServicos);
-
-    // Salva no localStorage
-    const todosServicos = JSON.parse(localStorage.getItem('servicosLiberados') || '[]');
-    const indexGlobal = todosServicos.findIndex((s: any) => 
-      s.secao === item.secao && s.andar === item.andar
-    );
-    if (indexGlobal !== -1) {
-      todosServicos[indexGlobal].volumeRestante = novosServicos[index].volumeRestante;
-      localStorage.setItem('servicosLiberados', JSON.stringify(todosServicos));
-    }
 
     setMedicoes([...medicoes, novo]);
   };
 
-  const atualizarQuantidade = (id: number, qtd: number) => {
-    const novos = medicoes.map(m => 
-      m.id === id ? { ...m, quantidade: qtd, total: qtd * m.valorUnitario } : m
-    );
-    setMedicoes(novos);
+  const atualizarQuantidade = (medicaoId: number, novaQtd: number) => {
+    setMedicoes(prevMedicoes => {
+      const novosMedicoes = prevMedicoes.map(m => {
+        if (m.id === medicaoId) {
+          const diferenca = novaQtd - m.quantidade;
+          const novos = [...servicosLiberados];
+          
+          if (m.servicoIndex !== undefined && novos[m.servicoIndex]) {
+            novos[m.servicoIndex].volumeRestante = Math.max(0, novos[m.servicoIndex].volumeRestante - diferenca);
+            setServicosLiberados(novos);
+
+            // Atualiza localStorage
+            const todos = JSON.parse(localStorage.getItem('servicosLiberados') || '[]');
+            const globalIndex = todos.findIndex((s: any) => 
+              s.secao === novos[m.servicoIndex].secao && s.andar === novos[m.servicoIndex].andar
+            );
+            if (globalIndex !== -1) {
+              todos[globalIndex].volumeRestante = novos[m.servicoIndex].volumeRestante;
+              localStorage.setItem('servicosLiberados', JSON.stringify(todos));
+            }
+          }
+
+          return { ...m, quantidade: novaQtd, total: novaQtd * m.valorUnitario };
+        }
+        return m;
+      });
+      return novosMedicoes;
+    });
   };
 
   const finalizarMedicao = () => {
@@ -132,6 +139,7 @@ export default function LancamentoMedicao() {
 
   return (
     <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
       <div className="w-72 bg-white border-r shadow-lg flex flex-col">
         <div className="p-6 border-b">
           <h1 className="text-2xl font-bold text-blue-600">Engecap Medição</h1>
@@ -151,6 +159,7 @@ export default function LancamentoMedicao() {
       <div className="flex-1 overflow-auto p-8">
         <h2 className="text-3xl font-bold mb-8">Lançamento de Medição</h2>
 
+        {/* Busca Funcionário */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-4">1. Buscar Funcionário</h4>
           <div className="flex gap-4">
@@ -160,6 +169,7 @@ export default function LancamentoMedicao() {
           {funcionarioAtual && <p className="mt-4 text-green-600 font-medium">✅ {funcionarioAtual.nome} - {funcionarioAtual.funcao}</p>}
         </div>
 
+        {/* Trechos Liberados */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">2. Trechos Liberados</h4>
           {servicosLiberados.length === 0 ? (
@@ -186,6 +196,7 @@ export default function LancamentoMedicao() {
           )}
         </div>
 
+        {/* Integração e VT */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">3. Integração e VT Sábado</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -200,6 +211,7 @@ export default function LancamentoMedicao() {
           </div>
         </div>
 
+        {/* Medições Lançadas */}
         {medicoes.length > 0 && (
           <div className="bg-white rounded-2xl shadow p-8">
             <h4 className="font-semibold mb-6">Medições Lançadas</h4>
@@ -219,7 +231,12 @@ export default function LancamentoMedicao() {
                     <td className="p-4">{item.nome}</td>
                     <td className="p-4">{item.servico}</td>
                     <td className="p-4 text-center">
-                      <input type="number" value={item.quantidade} onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value)||0)} className="w-24 border rounded text-center py-1" />
+                      <input 
+                        type="number" 
+                        value={item.quantidade} 
+                        onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value)||0)} 
+                        className="w-24 border rounded text-center py-1"
+                      />
                     </td>
                     <td className="p-4 text-center">R$ {item.valorUnitario}</td>
                     <td className="p-4 text-center font-semibold">R$ {item.total}</td>
