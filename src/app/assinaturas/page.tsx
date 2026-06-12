@@ -83,10 +83,10 @@ export default function AguardandoAssinatura() {
                     </td>
                     <td className="p-4 text-center">
                       {!assinaturas[item.id] && (
-                        <Link href="/assinatura">
+                        <Link href={`/assinatura?id=${item.id}`}>
                           <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium">
-                            Assinar Agora
-                          </button>
+                               Assinar Agora
+                         </button>
                         </Link>
                       )}
                     </td>

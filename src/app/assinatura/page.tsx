@@ -9,11 +9,16 @@ export default function AssinaturaMedicao() {
   const [medicaoAtual, setMedicaoAtual] = useState<any>(null);
 
   useEffect(() => {
+    // Pega o ID da medição pela URL (vamos passar ele depois)
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+
     const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
-    if (salvo) {
+    if (salvo && id) {
       const medicoes = JSON.parse(salvo);
-      if (medicoes.length > 0) {
-        setMedicaoAtual(medicoes[medicoes.length - 1]);
+      const encontrada = medicoes.find((m: any) => m.id === parseInt(id));
+      if (encontrada) {
+        setMedicaoAtual(encontrada);
       }
     }
   }, []);
@@ -65,7 +70,6 @@ export default function AssinaturaMedicao() {
       return;
     }
 
-    // Remove a medição assinada da lista de aguardando
     const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
     if (salvo && medicaoAtual) {
       let medicoes = JSON.parse(salvo);
@@ -73,7 +77,7 @@ export default function AssinaturaMedicao() {
       localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(medicoes));
     }
 
-    alert("✅ Assinatura salva com sucesso!\nMedição finalizada.");
+    alert("✅ Assinatura salva com sucesso!");
     window.location.href = "/assinaturas";
   };
 
