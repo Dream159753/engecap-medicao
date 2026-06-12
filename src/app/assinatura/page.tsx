@@ -73,8 +73,8 @@ export default function AssinaturaMedicao() {
       localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(todas));
     }
 
-    alert("✅ Assinatura salva com sucesso!\nTodas as medições deste funcionário foram finalizadas.");
-    window.location.href = "/assinaturas";
+    alert("✅ Assinatura salva com sucesso!");
+window.location.href = "/pagamento";
   };
 
   const totalGeral = medicoesDoFuncionario.reduce((sum, m) => sum + m.total, 0);
