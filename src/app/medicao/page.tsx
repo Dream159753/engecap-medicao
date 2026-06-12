@@ -31,7 +31,9 @@ export default function LancamentoMedicao() {
   const [qtIntegracao, setQtIntegracao] = useState(0);
   const [qtVTSabado, setQtVTSabado] = useState(0);
 
+  // Funcionários para teste (incluindo o 01 que você pediu)
   const funcionariosDB = [
+    { chapa: "01", nome: "João da Silva", funcao: "Carpinteiro" },
     { chapa: "1001", nome: "João da Silva", funcao: "Carpinteiro" },
     { chapa: "1002", nome: "Maria Oliveira", funcao: "Armador" },
     { chapa: "1003", nome: "Pedro Santos", funcao: "Pedreiro" },
@@ -50,6 +52,7 @@ export default function LancamentoMedicao() {
     const encontrado = funcionariosDB.find(f => f.chapa === chapa.trim());
     if (encontrado) {
       setFuncionarioAtual(encontrado);
+      alert(`✅ Encontrado: ${encontrado.nome} - ${encontrado.funcao}`);
     } else {
       alert("Funcionário não encontrado com esta chapa!");
       setFuncionarioAtual(null);
@@ -68,8 +71,8 @@ export default function LancamentoMedicao() {
       nome: funcionarioAtual.nome,
       funcao: funcionarioAtual.funcao,
       servico: `${liberado.trecho || 'Serviço'} - ${liberado.andar}`,
-      quantidade: liberado.volumeLiberado, // já sugere o valor liberado
-      valorUnitario: 150, // ajuste depois
+      quantidade: liberado.volumeLiberado,
+      valorUnitario: 150,
       total: liberado.volumeLiberado * 150
     };
 
@@ -106,17 +109,17 @@ export default function LancamentoMedicao() {
         </div>
       </div>
 
-      {/* Conteúdo */}
+      {/* Conteúdo Principal */}
       <div className="flex-1 overflow-auto p-8">
         <h2 className="text-3xl font-bold mb-8">Lançamento de Medição</h2>
 
-        {/* Busca de Funcionário */}
+        {/* Busca Funcionário */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-4">1. Buscar Funcionário pela Chapa</h4>
           <div className="flex gap-4">
             <input 
               type="text" 
-              placeholder="Digite a chapa" 
+              placeholder="Digite a chapa (ex: 01)" 
               value={chapa} 
               onChange={(e) => setChapa(e.target.value)}
               className="border rounded-lg px-4 py-3 w-64"
@@ -128,22 +131,22 @@ export default function LancamentoMedicao() {
 
         {/* Serviços Liberados */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
-          <h4 className="font-semibold mb-6">2. Serviços Liberados</h4>
+          <h4 className="font-semibold mb-6">2. Serviços / Trechos Liberados</h4>
           
           {servicosLiberados.length === 0 ? (
-            <p className="text-gray-500 py-12 text-center">Nenhum trecho liberado ainda. Vá na Liberação de Tarefas.</p>
+            <p className="text-gray-500 py-12 text-center">Nenhum trecho liberado ainda.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {servicosLiberados.map((item, idx) => (
                 <div key={idx} className="border rounded-xl p-6 hover:shadow">
                   <p className="font-medium">{item.secao} — {item.andar}</p>
                   <p className="text-gray-600 text-sm mt-1">{item.trecho || 'Sem descrição'}</p>
-                  <p className="text-blue-600 mt-3">{item.volumeLiberado} m³ liberados</p>
+                  <p className="text-blue-600 mt-3 font-semibold">{item.volumeLiberado} m³ liberados</p>
                   <button 
                     onClick={() => adicionarMedicao(item)}
                     className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium"
                   >
-                    Lançar neste funcionário
+                    Lançar Medição
                   </button>
                 </div>
               ))}
@@ -151,41 +154,31 @@ export default function LancamentoMedicao() {
           )}
         </div>
 
-        {/* Integração e VT Sábado */}
+        {/* Integração + VT Sábado */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">3. Integração e VT Sábado</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <label className="block text-sm mb-2">Integração (R$ 9,98)</label>
-              <input 
-                type="number" 
-                value={qtIntegracao} 
-                onChange={(e) => setQtIntegracao(Number(e.target.value) || 0)}
-                className="w-full border rounded-lg px-4 py-3"
-              />
+              <label className="block text-sm mb-2">Integração (R$ 9,98 por unidade)</label>
+              <input type="number" value={qtIntegracao} onChange={(e) => setQtIntegracao(Number(e.target.value) || 0)} className="w-full border rounded-lg px-4 py-3" />
             </div>
             <div>
-              <label className="block text-sm mb-2">VT Sábado (R$ 19,98)</label>
-              <input 
-                type="number" 
-                value={qtVTSabado} 
-                onChange={(e) => setQtVTSabado(Number(e.target.value) || 0)}
-                className="w-full border rounded-lg px-4 py-3"
-              />
+              <label className="block text-sm mb-2">VT Sábado (R$ 19,98 por unidade)</label>
+              <input type="number" value={qtVTSabado} onChange={(e) => setQtVTSabado(Number(e.target.value) || 0)} className="w-full border rounded-lg px-4 py-3" />
             </div>
           </div>
         </div>
 
-        {/* Medições Lançadas */}
+        {/* Medições Lançadas + Totais */}
         {medicoes.length > 0 && (
           <div className="bg-white rounded-2xl shadow p-8">
             <h4 className="font-semibold mb-6">Medições Lançadas</h4>
-            <table className="w-full">
+            <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="p-4 text-left">Funcionário</th>
                   <th className="p-4 text-left">Trecho / Serviço</th>
-                  <th className="p-4 text-center">Quantidade</th>
+                  <th className="p-4 text-center">Quantidade (m³)</th>
                   <th className="p-4 text-center">Valor Unit.</th>
                   <th className="p-4 text-center">Total</th>
                 </tr>
@@ -196,12 +189,7 @@ export default function LancamentoMedicao() {
                     <td className="p-4">{item.nome}</td>
                     <td className="p-4">{item.servico}</td>
                     <td className="p-4 text-center">
-                      <input 
-                        type="number" 
-                        value={item.quantidade} 
-                        onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value))}
-                        className="w-24 border rounded text-center"
-                      />
+                      <input type="number" value={item.quantidade} onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value) || 0)} className="w-24 border rounded text-center py-1" />
                     </td>
                     <td className="p-4 text-center">R$ {item.valorUnitario}</td>
                     <td className="p-4 text-center font-semibold">R$ {item.total}</td>
@@ -210,11 +198,13 @@ export default function LancamentoMedicao() {
               </tbody>
             </table>
 
-            <div className="mt-8 text-right text-2xl font-bold">
-              Total Serviços: R$ {totalServicos}<br/>
-              Integração: R$ {totalIntegracao.toFixed(2)}<br/>
-              VT Sábado: R$ {totalVTSabado.toFixed(2)}<br/>
-              <span className="text-green-600">TOTAL GERAL: R$ {totalGeral.toFixed(2)}</span>
+            <div className="mt-8 p-6 bg-gray-50 rounded-xl text-right text-xl">
+              <div>Total dos Serviços: <strong>R$ {totalServicos}</strong></div>
+              <div>Integração: <strong>R$ {totalIntegracao.toFixed(2)}</strong></div>
+              <div>VT Sábado: <strong>R$ {totalVTSabado.toFixed(2)}</strong></div>
+              <div className="text-2xl text-green-600 font-bold mt-4">
+                TOTAL GERAL: R$ {totalGeral.toFixed(2)}
+              </div>
             </div>
           </div>
         )}
