@@ -6,15 +6,17 @@ export default function AssinaturaMedicao() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [assinaturaFeita, setAssinaturaFeita] = useState(false);
-  const [medicaoAtual, setMedicaoAtual] = useState<any>(null);
+  const [medicoesDoFuncionario, setMedicoesDoFuncionario] = useState<any[]>([]);
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const chapa = urlParams.get('chapa');
+
     const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
-    if (salvo) {
-      const medicoes = JSON.parse(salvo);
-      if (medicoes.length > 0) {
-        setMedicaoAtual(medicoes[medicoes.length - 1]);
-      }
+    if (salvo && chapa) {
+      const todas = JSON.parse(salvo);
+      const doFuncionario = todas.filter((m: any) => m.chapa === chapa);
+      setMedicoesDoFuncionario(doFuncionario);
     }
   }, []);
 
@@ -64,30 +66,38 @@ export default function AssinaturaMedicao() {
     }
 
     const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
-    if (salvo && medicaoAtual) {
-      let medicoes = JSON.parse(salvo);
-      medicoes = medicoes.filter((m: any) => m.id !== medicaoAtual.id);
-      localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(medicoes));
+    if (salvo && medicoesDoFuncionario.length > 0) {
+      let todas = JSON.parse(salvo);
+      // Remove todas as medições deste funcionário
+      todas = todas.filter((m: any) => m.chapa !== medicoesDoFuncionario[0].chapa);
+      localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(todas));
     }
 
-    alert("✅ Assinatura salva com sucesso!\nMedição finalizada.");
+    alert("✅ Assinatura salva com sucesso!\nTodas as medições deste funcionário foram finalizadas.");
     window.location.href = "/assinaturas";
   };
+
+  const totalGeral = medicoesDoFuncionario.reduce((sum, m) => sum + m.total, 0);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-5xl mx-auto">
         <h2 className="text-4xl font-bold text-center mb-8">Assinatura da Medição</h2>
 
-        {medicaoAtual && (
+        {medicoesDoFuncionario.length > 0 && (
           <div className="bg-white rounded-3xl shadow-xl p-8 mb-10">
             <h3 className="font-semibold mb-6 text-center text-2xl border-b pb-4">Resumo da Medição</h3>
             <div className="grid grid-cols-2 gap-y-4 text-lg">
-              <div><strong>Funcionário:</strong> {medicaoAtual.nome}</div>
-              <div><strong>Chapa:</strong> {medicaoAtual.chapa}</div>
-              <div className="col-span-2"><strong>Trecho / Serviço:</strong> {medicaoAtual.servico}</div>
-              <div><strong>Quantidade:</strong> <span className="text-blue-600 font-bold">{medicaoAtual.quantidade} m³</span></div>
-              <div><strong>Total:</strong> <span className="text-green-600 font-bold">R$ {medicaoAtual.total}</span></div>
+              <div><strong>Funcionário:</strong> {medicoesDoFuncionario[0].nome}</div>
+              <div><strong>Chapa:</strong> {medicoesDoFuncionario[0].chapa}</div>
+              <div className="col-span-2">
+                <strong>Trechos:</strong><br/>
+                {medicoesDoFuncionario.map((m, i) => (
+                  <div key={i} className="ml-4">• {m.servico} — {m.quantidade} m³</div>
+                ))}
+              </div>
+              <div><strong>Quantidade Total:</strong> <span className="text-blue-600 font-bold">{medicoesDoFuncionario.reduce((sum, m) => sum + m.quantidade, 0)} m³</span></div>
+              <div><strong>Total Geral:</strong> <span className="text-green-600 font-bold">R$ {totalGeral}</span></div>
             </div>
           </div>
         )}

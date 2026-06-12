@@ -118,10 +118,10 @@ export default function AguardandoAssinatura() {
                     </td>
                     <td className="p-4 text-center">
                       {!assinaturas[grupo.chapa] && (
-                        <Link href={`/assinatura?id=${grupo.itens[0].id}`}>
-                          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium">
-                            Assinar Agora
-                          </button>
+                       <Link href={`/assinatura?chapa=${grupo.chapa}`}>
+                         <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium">
+                              Assinar Agora
+                         </button>
                         </Link>
                       )}
                     </td>
