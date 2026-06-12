@@ -43,12 +43,13 @@ export default function LancamentoMedicao() {
   useEffect(() => {
     const salvo = localStorage.getItem('servicosLiberados');
     if (salvo) {
-      let dados: ServicoLiberado[] = JSON.parse(salvo);
-      dados = dados.map(s => ({
+      let dados = JSON.parse(salvo);
+      // Garante que todos tenham volumeRestante
+      dados = dados.map((s: any) => ({
         ...s,
-        volumeRestante: s.volumeRestante !== undefined ? s.volumeRestante : s.volumeLiberado
+        volumeRestante: s.volumeRestante !== undefined ? s.volumeRestante : s.volumeLiberado || 0
       }));
-      setServicosLiberados(dados.filter(s => s.liberado === true));
+      setServicosLiberados(dados.filter((s: any) => s.liberado === true));
     }
   }, []);
 
@@ -57,16 +58,16 @@ export default function LancamentoMedicao() {
     if (encontrado) {
       setFuncionarioAtual(encontrado);
     } else {
-      alert("Funcionário não encontrado!");
+      alert("Funcionário não encontrado com esta chapa!");
     }
   };
 
-  const adicionarMedicao = (liberado: ServicoLiberado, index: number) => {
+  const adicionarMedicao = (item: ServicoLiberado, index: number) => {
     if (!funcionarioAtual) {
       alert("Busque um funcionário primeiro!");
       return;
     }
-    if (liberado.volumeRestante <= 0) {
+    if (item.volumeRestante <= 0) {
       alert("Não há mais volume disponível!");
       return;
     }
@@ -76,7 +77,7 @@ export default function LancamentoMedicao() {
       chapa: funcionarioAtual.chapa,
       nome: funcionarioAtual.nome,
       funcao: funcionarioAtual.funcao,
-      servico: `${liberado.trecho || 'Serviço'} - ${liberado.andar}`,
+      servico: `${item.trecho || 'Serviço'} - ${item.andar}`,
       quantidade: 0,
       valorUnitario: 150,
       total: 0
@@ -85,11 +86,11 @@ export default function LancamentoMedicao() {
     setMedicoes([...medicoes, novo]);
   };
 
-  const atualizarQuantidade = (medicaoId: number, qtd: number) => {
-    const novosMedicoes = medicoes.map(m => 
-      m.id === medicaoId ? { ...m, quantidade: qtd, total: qtd * m.valorUnitario } : m
+  const atualizarQuantidade = (id: number, qtd: number) => {
+    const novos = medicoes.map(m => 
+      m.id === id ? { ...m, quantidade: qtd, total: qtd * m.valorUnitario } : m
     );
-    setMedicoes(novosMedicoes);
+    setMedicoes(novos);
   };
 
   const finalizarMedicao = () => {
@@ -98,11 +99,11 @@ export default function LancamentoMedicao() {
       return;
     }
 
-    const medicoesSalvas = JSON.parse(localStorage.getItem('medicoesAguardandoAssinatura') || '[]');
-    localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify([...medicoesSalvas, ...medicoes]));
+    const salvo = JSON.parse(localStorage.getItem('medicoesAguardandoAssinatura') || '[]');
+    localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify([...salvo, ...medicoes]));
 
     alert(`✅ ${medicoes.length} medição(ões) salva(s) para assinatura!`);
-
+    
     setMedicoes([]);
     setChapa("");
     setFuncionarioAtual(null);
@@ -169,7 +170,6 @@ export default function LancamentoMedicao() {
           )}
         </div>
 
-        {/* Integração e VT */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">3. Integração e VT Sábado</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -184,7 +184,6 @@ export default function LancamentoMedicao() {
           </div>
         </div>
 
-        {/* Medições Lançadas */}
         {medicoes.length > 0 && (
           <div className="bg-white rounded-2xl shadow p-8">
             <h4 className="font-semibold mb-6">Medições Lançadas</h4>
@@ -204,12 +203,7 @@ export default function LancamentoMedicao() {
                     <td className="p-4">{item.nome}</td>
                     <td className="p-4">{item.servico}</td>
                     <td className="p-4 text-center">
-                      <input 
-                        type="number" 
-                        value={item.quantidade} 
-                        onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value)||0)} 
-                        className="w-24 border rounded text-center py-1"
-                      />
+                      <input type="number" value={item.quantidade} onChange={(e) => atualizarQuantidade(item.id, Number(e.target.value)||0)} className="w-24 border rounded text-center py-1" />
                     </td>
                     <td className="p-4 text-center">R$ {item.valorUnitario}</td>
                     <td className="p-4 text-center font-semibold">R$ {item.total}</td>
