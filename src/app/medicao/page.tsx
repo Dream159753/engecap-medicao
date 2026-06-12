@@ -71,15 +71,17 @@ export default function LancamentoMedicao() {
       return;
     }
 
+    const quantidadeSugestao = Math.min(10, item.volumeRestante); // sugere um valor razoável
+
     const novo: MedicaoItem = {
       id: Date.now(),
       chapa: funcionarioAtual.chapa,
       nome: funcionarioAtual.nome,
       funcao: funcionarioAtual.funcao,
       servico: `${item.trecho || 'Serviço'} - ${item.andar}`,
-      quantidade: 0,
+      quantidade: quantidadeSugestao,
       valorUnitario: 150,
-      total: 0
+      total: quantidadeSugestao * 150
     };
 
     setMedicoes([...medicoes, novo]);
@@ -169,6 +171,7 @@ export default function LancamentoMedicao() {
           )}
         </div>
 
+        {/* Integração e VT */}
         <div className="bg-white rounded-2xl shadow p-8 mb-8">
           <h4 className="font-semibold mb-6">3. Integração e VT Sábado</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
