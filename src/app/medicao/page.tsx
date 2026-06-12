@@ -44,7 +44,6 @@ export default function LancamentoMedicao() {
     const salvo = localStorage.getItem('servicosLiberados');
     if (salvo) {
       let dados = JSON.parse(salvo);
-      // Garante que todos tenham volumeRestante
       dados = dados.map((s: any) => ({
         ...s,
         volumeRestante: s.volumeRestante !== undefined ? s.volumeRestante : s.volumeLiberado || 0
@@ -58,7 +57,7 @@ export default function LancamentoMedicao() {
     if (encontrado) {
       setFuncionarioAtual(encontrado);
     } else {
-      alert("Funcionário não encontrado com esta chapa!");
+      alert("Funcionário não encontrado!");
     }
   };
 
@@ -158,7 +157,7 @@ export default function LancamentoMedicao() {
                   <p className="text-orange-600">Restante: <strong>{item.volumeRestante} m³</strong></p>
                   
                   <button 
-                    onClick={() => adicionarMedicao(item)}
+                    onClick={() => adicionarMedicao(item, idx)}
                     disabled={item.volumeRestante <= 0}
                     className="mt-4 w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-lg font-medium"
                   >

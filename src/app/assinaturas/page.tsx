@@ -16,7 +16,6 @@ type MedicaoItem = {
 export default function AguardandoAssinatura() {
   const [medicoes, setMedicoes] = useState<MedicaoItem[]>([]);
   const [assinaturas, setAssinaturas] = useState<Record<number, string>>({});
-  const [medicaoSelecionada, setMedicaoSelecionada] = useState<MedicaoItem | null>(null);
 
   useEffect(() => {
     const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
@@ -26,21 +25,12 @@ export default function AguardandoAssinatura() {
   }, []);
 
   const registrarAssinatura = (id: number) => {
-    const confirmacao = window.confirm(`Confirmar assinatura do funcionário?\n\n${medicoes.find(m => m.id === id)?.nome}`);
-    if (confirmacao) {
+    if (confirm("Confirmar assinatura deste funcionário?")) {
       setAssinaturas(prev => ({
         ...prev,
         [id]: new Date().toLocaleString('pt-BR')
       }));
       alert("✅ Assinatura registrada com sucesso!");
-    }
-  };
-
-  const removerMedicao = (id: number) => {
-    if (confirm("Remover esta medição?")) {
-      const novas = medicoes.filter(m => m.id !== id);
-      setMedicoes(novas);
-      localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(novas));
     }
   };
 
@@ -71,7 +61,7 @@ export default function AguardandoAssinatura() {
 
         {medicoes.length === 0 ? (
           <div className="bg-white rounded-2xl shadow p-20 text-center">
-            <p className="text-2xl text-gray-400">Nenhuma medição aguardando assinatura no momento.</p>
+            <p className="text-xl text-gray-500">Nenhuma medição aguardando assinatura no momento.</p>
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow p-8">
@@ -97,23 +87,16 @@ export default function AguardandoAssinatura() {
                       {assinaturas[item.id] ? (
                         <span className="text-green-600 font-medium">✅ Assinado</span>
                       ) : (
-                        <span className="text-orange-600 font-medium">⏳ Aguardando</span>
+                        <span className="text-orange-600">⏳ Aguardando</span>
                       )}
                     </td>
                     <td className="p-4 text-center">
-                      {!assinaturas[item.id] ? (
+                      {!assinaturas[item.id] && (
                         <button 
                           onClick={() => registrarAssinatura(item.id)}
                           className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
                         >
-                          Registrar Assinatura
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => removerMedicao(item.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          Remover
+                          Assinar
                         </button>
                       )}
                     </td>
