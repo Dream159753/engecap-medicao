@@ -42,17 +42,18 @@ export default function LiberarPagamento() {
   const totalGeral = Object.values(grupos).reduce((sum: number, g: any) => sum + g.total, 0);
 
   const liberarParaDP = (chapa: string) => {
-    if (confirm(`Liberar todas as medições de ${grupos[chapa].nome} para pagamento?`)) {
+    if (confirm(`Liberar todas as medições de ${grupos[chapa].nome} para o DP?`)) {
       const restantes = medicoes.filter(m => m.chapa !== chapa);
       localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(restantes));
       
       setMedicoes(restantes);
-      alert(`✅ Medições de ${grupos[chapa].nome} liberadas para o DP!`);
+      alert(`✅ Medições de ${grupos[chapa].nome} liberadas para pagamento!`);
     }
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
       <div className="w-72 bg-white border-r shadow-lg flex flex-col">
         <div className="p-6 border-b">
           <h1 className="text-2xl font-bold text-blue-600">Engecap Medição</h1>
@@ -70,6 +71,7 @@ export default function LiberarPagamento() {
         </div>
       </div>
 
+      {/* Conteúdo Principal */}
       <div className="flex-1 overflow-auto p-8">
         <h2 className="text-3xl font-bold mb-8">Liberar para Pagamento</h2>
 
@@ -78,10 +80,10 @@ export default function LiberarPagamento() {
             <p className="text-xl text-gray-500">Nenhuma medição assinada pronta para pagamento.</p>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-10">
             {Object.values(grupos).map((grupo: any) => (
               <div key={grupo.chapa} className="bg-white rounded-2xl shadow p-8">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-start mb-6">
                   <div>
                     <h3 className="text-2xl font-semibold">{grupo.nome}</h3>
                     <p className="text-gray-500">Chapa: {grupo.chapa} • {grupo.funcao}</p>
@@ -121,6 +123,12 @@ export default function LiberarPagamento() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {totalGeral > 0 && (
+          <div className="mt-8 text-right text-3xl font-bold text-green-600">
+            Total Geral a Pagar: R$ {totalGeral}
           </div>
         )}
       </div>
