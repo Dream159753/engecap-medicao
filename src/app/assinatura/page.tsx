@@ -79,22 +79,29 @@ export default function AssinaturaMedicao() {
     setAssinaturaFeita(false);
   };
 
-  const salvarAssinatura = () => {
-    if (!assinaturaFeita) {
-      alert("Por favor, faça a assinatura antes de salvar.");
-      return;
-    }
+const salvarAssinatura = () => {
+  if (!assinaturaFeita) {
+    alert("Por favor, faça a assinatura antes de salvar.");
+    return;
+  }
 
-    const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
-    if (salvo && medicaoAtual) {
-      let medicoes = JSON.parse(salvo);
-      medicoes = medicoes.filter((m: any) => m.id !== medicaoAtual.id);
-      localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(medicoes));
-    }
+  const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
+  if (salvo && medicaoAtual) {
+    let medicoes = JSON.parse(salvo);
+    const assinada = medicoes.filter((m: any) => m.id === medicaoAtual.id);
+    
+    // Remove da aguardando
+    medicoes = medicoes.filter((m: any) => m.id !== medicaoAtual.id);
+    localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(medicoes));
 
-    alert("✅ Assinatura salva com sucesso!\nMedição finalizada.");
-    window.location.href = "/assinaturas";
-  };
+    // Move para pagamento
+    const paraPagamento = JSON.parse(localStorage.getItem('medicoesParaPagamento') || '[]');
+    localStorage.setItem('medicoesParaPagamento', JSON.stringify([...paraPagamento, ...assinada]));
+  }
+
+  alert("✅ Assinatura salva com sucesso!");
+  window.location.href = "/assinaturas";
+};
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">

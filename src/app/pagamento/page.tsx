@@ -17,13 +17,12 @@ export default function LiberarPagamento() {
   const [medicoes, setMedicoes] = useState<MedicaoItem[]>([]);
 
   useEffect(() => {
-    const salvo = localStorage.getItem('medicoesAguardandoAssinatura');
+    const salvo = localStorage.getItem('medicoesParaPagamento');
     if (salvo) {
       setMedicoes(JSON.parse(salvo));
     }
   }, []);
 
-  // Agrupa por funcionário
   const grupos = medicoes.reduce((acc: any, item) => {
     if (!acc[item.chapa]) {
       acc[item.chapa] = {
@@ -44,16 +43,14 @@ export default function LiberarPagamento() {
   const liberarParaDP = (chapa: string) => {
     if (confirm(`Liberar todas as medições de ${grupos[chapa].nome} para o DP?`)) {
       const restantes = medicoes.filter(m => m.chapa !== chapa);
-      localStorage.setItem('medicoesAguardandoAssinatura', JSON.stringify(restantes));
-      
+      localStorage.setItem('medicoesParaPagamento', JSON.stringify(restantes));
       setMedicoes(restantes);
-      alert(`✅ Medições de ${grupos[chapa].nome} liberadas para pagamento!`);
+      alert(`✅ Liberado para pagamento!`);
     }
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <div className="w-72 bg-white border-r shadow-lg flex flex-col">
         <div className="p-6 border-b">
           <h1 className="text-2xl font-bold text-blue-600">Engecap Medição</h1>
@@ -71,7 +68,6 @@ export default function LiberarPagamento() {
         </div>
       </div>
 
-      {/* Conteúdo Principal */}
       <div className="flex-1 overflow-auto p-8">
         <h2 className="text-3xl font-bold mb-8">Liberar para Pagamento</h2>
 
@@ -123,12 +119,6 @@ export default function LiberarPagamento() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {totalGeral > 0 && (
-          <div className="mt-8 text-right text-3xl font-bold text-green-600">
-            Total Geral a Pagar: R$ {totalGeral}
           </div>
         )}
       </div>
